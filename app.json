@@ -8,7 +8,10 @@
     "scheme": "machinescanpoc",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSCameraUsageDescription": "L'app utilise la caméra pour photographier et identifier les machines de gym."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +39,13 @@
         }
       ],
       "expo-image",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermissionText": "L'app utilise la caméra pour photographier et identifier les machines de gym."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -18,6 +18,25 @@
 - Captured image URI is passed to scan result.
 - Capture error state is understandable.
 
+Phase 2 detail:
+
+- Permission loading state ("Vérification des permissions caméra…") appears
+  before the system prompt.
+- Capture button is disabled until `onCameraReady` fires.
+- Capture in progress shows "Capture…" and disables the button.
+- Denied permanently (`canAskAgain === false`) shows a settings-focused
+  message; pressing "Redemander la permission" re-requests.
+- `onMountError` (camera unavailable) sets a capture error card.
+- Navigation after capture uses `replace` so back does not reopen the camera.
+- Captured image is temporary (cache URI); persistence handled in Phase 5.
+- Simulator: camera may be unavailable — verify the error state shows.
+
+### Scan Result (Phase 2)
+
+- Captured photo is visible when `imageUri` is present.
+- "Image manquante" state appears when navigated to without `imageUri`.
+- A placeholder card indicates IA recognition comes in Phase 3/4.
+
 ### Recognition
 
 - Mock provider returns valid result.

@@ -54,7 +54,7 @@ Notes:
 
 ## Phase 2 — Camera Capture
 
-Status: TODO
+Status: DONE
 
 Goals:
 
@@ -69,6 +69,25 @@ Done when:
 - Capture button works.
 - Captured image URI reaches scan result screen.
 - Permission denied state is usable.
+
+Notes:
+
+- Capture logic isolated in `src/features/camera/components/CameraCapture.tsx`,
+  route `src/app/camera.tsx` is a thin wrapper (camera feature stays
+  independent of UI navigation layer).
+- Uses `expo-camera` `CameraView` + `useCameraPermissions` hook.
+- States handled: permission loading (null), permission denied (with retry +
+  denied-canAskAgain=false messaging), camera ready, capturing, capture error
+  (onMountError + takePictureAsync failure).
+- After capture, navigates with `router.replace('/scan-result', { imageUri })`
+  so the back button does not reopen the camera.
+- `scan-result` screen shows the captured photo (`expo-image`) or a clear
+  "image manquante" state with a CTA back to camera; an AI placeholder card
+  points to Phase 3/4.
+- `app.json` configured with `expo-camera` plugin and `NSCameraUsageDescription`
+  for iOS.
+
+Manual iPhone validation required.
 
 ## Phase 3 — Machine Recognition Contract
 
