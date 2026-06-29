@@ -22,7 +22,7 @@ Done when:
 
 ## Phase 1 — App Shell
 
-Status: TODO
+Status: DONE
 
 Goals:
 
@@ -38,6 +38,19 @@ Done when:
 - Saved machines route opens.
 - Machine detail placeholder exists.
 - Shared UI components exist.
+
+Notes:
+
+- Routes live in `src/app/` (Expo Router directory used by the project).
+- Stack-based navigation (replaced the template tab layout).
+- Minimal theme added under `src/shared/theme` (colors, spacing, typography)
+  with light/dark support via `useAppTheme`.
+- Shared UI components added under `src/shared/components`:
+  `Screen`, `PrimaryButton`, `Card`, `AppText`.
+- Placeholder screens created for camera, scan-result, saved-machines and
+  machine detail (`machine/[id]`).
+- Removed leftover template route `src/app/explore.tsx`.
+- No camera capture or AI logic in this phase (placeholders only).
 
 ## Phase 2 — Camera Capture
 
