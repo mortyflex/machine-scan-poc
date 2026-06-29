@@ -9,7 +9,7 @@ Goals:
 - Create Expo app.
 - Add project docs.
 - Add AGENTS.md and CLAUDE.md.
-- Add Claude skills.
+- Add Opencode skills.
 - Prepare feature folders.
 
 Done when:
