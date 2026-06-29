@@ -1,19 +1,31 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "react-native";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
     <ThemeProvider value={theme}>
-      <Stack screenOptions={{}}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="camera" options={{ title: 'Caméra' }} />
-        <Stack.Screen name="scan-result" options={{ title: 'Résultat' }} />
-        <Stack.Screen name="saved-machines" options={{ title: 'Sauvegardées' }} />
-        <Stack.Screen name="machine/[id]" options={{ title: 'Machine' }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="camera" />
+        <Stack.Screen name="scan-result" />
+        <Stack.Screen name="saved-machines" />
+        <Stack.Screen name="machine/[id]" />
       </Stack>
+
+      <StatusBar style="auto" />
     </ThemeProvider>
   );
 }
