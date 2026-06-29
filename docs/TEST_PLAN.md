@@ -115,23 +115,29 @@ Manual: app should remain openable; no UI wiring in this phase.
   document directory).
 - Deleting a machine removes it from the list after restart.
 
-### Reveal Effect (Phase 6)
+### Reveal Effect (Phase 6.1 — CapWords-like pseudo cutout)
 
-- The captured photo shows as the reveal background; if the image cannot
-  load, a clean dark zone is shown instead of crashing.
-- Background dims progressively and the photo zooms slightly during loading.
-- A focus ring + halo scale in around the central area, with staggered
-  pulsing particles around the ring.
-- The "Analyse de la machine…" caption is visible during loading.
-- On success the machine name label appears (with "À confirmer" when
-  `needsConfirmation`), and the result card slides in (`FadeInUp`).
-- The animation does not add an artificial delay to the flow and does not
-  hide the result for too long.
-- On error the ring/particles fade out, the photo stays dimmed, and the
-  error card appears below — error state is never blocked.
-- The animation does not break save / saved / SQLite persistence or the
-  existing CTAs.
-- App remains responsive on iPhone.
+- The captured photo is visible full-frame, then the background visibly
+  dissolves: photo opacity drops to near-zero while a bright neutral
+  (`#FAFAFA`) background appears.
+- Deterministic dust fragments fly outward from around the central focus
+  area and fade out (not confetti / sparkles).
+- The central pseudo-cutout region appears to detach from the scene:
+  it scales up (`1 -> 1.08`), lifts (`translateY -24`), rotates slightly,
+  and gains a white edge glow.
+- A soft elliptical shadow appears under the floating object.
+- On success the recognition label appears under the object: machine name
+  (bold) + "Machine détectée" + "À confirmer" pill when
+  `needsConfirmation`; the result card slides in (`FadeInUp`) and stays
+  readable.
+- During loading the "Analyse de la machine…" caption is visible.
+- On error the dissolve is aborted (photo stays visible), "Analyse
+  impossible" shows, and the error card appears below — never blocked.
+- If the image fails to load, a clean bright background is shown with the
+  loading/error label; no crash.
+- The animation adds no artificial delay to the ~600ms mock flow and does
+  not break save / saved / SQLite persistence or the existing CTAs.
+- No infinite animations after success; app remains responsive on iPhone.
 
 ### Remote AI
 

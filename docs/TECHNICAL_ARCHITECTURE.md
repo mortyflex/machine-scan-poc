@@ -83,9 +83,14 @@ components independent from Expo Router:
 - `MuscleTags`: primary and secondary muscle pills.
 - `ExerciseList`: list of exercises with difficulty badge, setup,
   execution, common mistakes, and safety notes.
-- `MachineRevealEffect` (Phase 6): Reanimated-only premium reveal
-  animation (dim, zoom, focus ring, halo, particles, label) shown during
-  recognition loading; independent from Expo Router.
+- `MachineRevealEffect` (Phase 6.1): CapWords-like layered pseudo-cutout
+  reveal using Reanimated only (no Skia). Layers: original photo (fades),
+  dust veil + 28 deterministic fragments, bright neutral background
+  (`#FAFAFA`), soft elliptical shadow, clipped pseudo-cutout object layer
+  (duplicated image, scale/translate/rotate + edge glow), and recognition
+  label. Props are future-ready for a real `cutoutUri` (transparent
+  PNG/WebP) and support `effectLevel: 'basic' | 'pseudo-cutout'`.
+  Independent from Expo Router.
 
 The `scan-result` route (`src/app/scan-result.tsx`) owns the runtime
 state machine (missing / loading / success / error) and wires

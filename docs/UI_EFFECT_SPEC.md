@@ -31,42 +31,135 @@ Use:
 - Result label appearing from behind the image.
 - Machine result card sliding upward.
 
-## Delivered V1 (Phase 6)
+## Delivered V2 — CapWords-like pseudo cutout
 
-The V1 effect is implemented in
-`src/features/machine-scan/components/MachineRevealEffect.tsx` using
-React Native Reanimated only (no Skia), for reliability in Expo Go on
-SDK 54. It fakes the reveal without real segmentation.
+This version approximates the CapWords effect without true segmentation.
 
-Delivered elements:
+It uses:
+- duplicated image layer
+- clipped pseudo subject area
+- background dissolve
+- deterministic fragments
+- bright neutral final background
+- floating object shadow
+- recognition label
+- fallback for future cutoutUri
 
-- Captured image as background (`expo-image`, `contentFit: cover`); falls
-  back to a clean dark zone if the image fails to load.
-- Progressive background dim (overlay `opacity 0 -> 0.5`, ~500ms after a
-  100ms delay).
-- Subtle photo zoom (`scale 1 -> 1.05`, ~1400ms ease-out).
-- Focus ring + halo scaling in around the approximate central object area
-  (ring scale `0.6 -> 1`, ~500ms after a 250ms delay).
-- Six staggered, gently pulsing particles positioned around the ring.
-- Loading caption ("Analyse de la machine…") during loading, fading out
-  on success/error.
-- Machine name label appearing on success (opacity + translateY), with an
-  "À confirmer" tag when `needsConfirmation`.
-- Result card slides upward via `FadeInUp` on success.
+Implemented in `src/features/machine-scan/components/MachineRevealEffect.tsx`
+with React Native Reanimated only (no Skia, no native module) for Expo Go
+compatibility on SDK 54.
 
-Behaviour by state:
+### Props (future-ready)
 
-- Loading: full reveal timeline plays; the loading caption is visible.
-- Success: label reveals; result card slides in; the effect does not hide
-  the result for too long and adds no artificial delay to the flow.
-- Low confidence: label shows the machine name with an "À confirmer" tag.
-- Error: ring/particles fade out, photo stays lightly dimmed, and the
-  error card appears below — error state is never blocked.
+```ts
+type MachineRevealEffectLevel = 'basic' | 'pseudo-cutout';
 
-Skipped for V1 (deferred):
+type MachineRevealEffectProps = {
+  imageUri: string;
+  machineName?: string;
+  status: 'loading' | 'success' | 'error';
+  needsConfirmation?: boolean;
+  effectLevel?: MachineRevealEffectLevel; // default 'pseudo-cutout'
+  cutoutUri?: string; // future transparent PNG/WebP from real segmentation
+};
+```
 
-- Real segmentation, bounding box, background blur, and Skia-based layers
-  (see Effect V2 / V3).
+When `cutoutUri` is provided, it is used as the true object layer instead of
+the clipped photo pseudo-cutout. Today it is usually `undefined`.
+
+### Layers
+
+```txt
+Layer 1 — Original photo background (fades 1 -> 0.08)
+Layer 2 — Dissolve / dust veil + deterministic fragments (fly outward)
+Layer 3 — Pseudo-cutout object layer (duplicated, clipped central region)
+Layer 4 — Soft elliptical shadow under the object (opacity 0 -> 0.22)
+Layer 5 — Recognition label (machine name + "Machine détectée" + "À confirmer")
+Layer 6 — Result transition area (handled by the screen: card slides in)
+```
+
+### Pseudo-cutout geometry (responsive, no real detection)
+
+```txt
+focusWidth:  78% of container
+focusHeight: 46% of container
+focusLeft:   centered (11%)
+focusTop:    19% (centerY 42%)
+focusRadius: 34
+```
+
+The cutout duplicates the original image and clips the central region so it
+aligns pixel-perfect with the background. As the background fades and the
+cutout scales/translates/rotates, the region appears to detach.
+
+Cutout transform: `scale 1 -> 1.08`, `translateY 0 -> -24`,
+`rotateZ 0 -> -0.7deg`, plus a white edge glow border and a subtle halo.
+
+### Fragments (deterministic, no Math.random at render)
+
+- 28 fragments generated via `useMemo` from container size.
+- Start on an ellipse around the focus rect perimeter, fly outward.
+- Sizes 2-9px, light gray / off-white colors, slight rotate.
+- `opacity 0 -> 0.85 -> 0`, `scale 1 -> 0.35`, short duration.
+- Resembles photographic matter breaking into fine dust (not confetti).
+
+### Background transition
+
+```txt
+background photo opacity: 1 -> 0.08
+bright neutral background opacity: 0 -> 1 (final #FAFAFA)
+dust veil opacity: 0 -> 0.3 -> 0
+```
+
+The final background is a bright neutral `#FAFAFA` (not black).
+
+### Shadow
+
+Elliptical soft shadow under the cutout: appears after ~500ms,
+`opacity 0 -> 0.22`, `scaleX 0.7 -> 1`, simulated blur via rounded View.
+
+### Label
+
+Under the object (top ~70%):
+
+- success: machine name (bold) + "Machine détectée" + "À confirmer" pill if
+  `needsConfirmation`.
+- loading: "Analyse de la machine…" + spinner.
+- error: "Analyse impossible" + "Réessaie ou reprends une photo."
+
+Label animation: `opacity 0 -> 1`, `translateY 8 -> 0`, `scale 0.96 -> 1`,
+delay ~900ms.
+
+### Timeline (~1200-1600ms)
+
+```txt
+0ms      photo visible, natural
+100-350  background starts desaturating/brightening, dust appears
+350-700  pseudo-cutout detaches (scale/translate/rotate), bg loses opacity,
+         fragments fly outward
+700-1000 background becomes near-white, object floats, shadow appears,
+         fragments fade out
+1000-1300 label appears under the object (+ "À confirmer" if needed)
+1300+    result card is readable (screen slides it in with FadeInUp)
+```
+
+The timeline plays during the ~600ms mock loading and adds no artificial
+delay to the flow.
+
+### Error / fallback
+
+- On error the dissolve is aborted: the photo stays visible, the bright
+  background and shadow fade out, and "Analyse impossible" shows. The error
+  card appears below — error state is never blocked.
+- If the image fails to load, a clean bright background is shown with the
+  loading/error label; no crash.
+- `effectLevel: 'basic'` provides a simpler fallback (photo + light dim +
+  label) without cutout/fragments.
+
+### Skipped for V2 (deferred)
+
+- Real segmentation, real cutout, background blur, Skia layers (V3).
+
 
 ## Effect V2
 

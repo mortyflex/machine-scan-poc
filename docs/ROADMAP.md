@@ -264,6 +264,44 @@ Notes:
 - Manual visual validation required on a physical device before the human
   owner accepts the phase.
 
+## Phase 6.1 — Reveal Effect Corrective (CapWords-like pseudo cutout)
+
+Status: DONE
+
+Goal:
+
+- Rebuild the reveal to closely match the CapWords reference: photo freeze
+  -> background dissolves into dust -> pseudo-cutout detaches -> bright
+  neutral background -> soft shadow under the object -> recognition label
+  -> result card.
+
+Notes:
+
+- `MachineRevealEffect` rewritten as layered pseudo-cutout using Reanimated
+  only (no Skia, no native module, Expo Go compatible on SDK 54).
+- New props: `effectLevel?: 'basic' | 'pseudo-cutout'` (default
+  `'pseudo-cutout'`) and future-ready `cutoutUri?` (transparent PNG/WebP
+  from a future real segmentation; falls back to the clipped photo
+  pseudo-cutout when undefined).
+- Layers: original photo (fades `1 -> 0.08`), dust veil + 28 deterministic
+  fragments flying outward (computed via `useMemo`, no `Math.random` at
+  render), bright neutral background (`#FAFAFA`, `0 -> 1`), soft
+  elliptical shadow under the object (`opacity 0 -> 0.22`), pseudo-cutout
+  object layer (duplicated, clipped central region, `scale 1 -> 1.08`,
+  `translateY 0 -> -24`, `rotate 0 -> -0.7deg`, white edge glow), and the
+  recognition label under the object.
+- Timeline ~1200-1600ms, plays during the ~600ms mock loading with no
+  artificial delay. On success the label shows the machine name +
+  "Machine détectée" (+ "À confirmer" if `needsConfirmation`); the result
+  card slides in via `FadeInUp`.
+- On error the dissolve is aborted (photo stays visible, bright bg/shadow
+  fade out, "Analyse impossible" shows); the error card appears below.
+  Image load failure shows a clean bright background with no crash.
+- All existing states preserved: missing image, loading, success, error,
+  low-confidence, save (idle/saving/saved/error), SQLite persistence, CTAs.
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
+
 ## Phase 7 — Real AI Provider
 
 Status: TODO
