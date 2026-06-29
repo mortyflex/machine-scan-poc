@@ -118,8 +118,24 @@ recognizeMachine(imageUri)
   -> provider adapter
   -> raw AI response
   -> Zod validation
+  -> conservative confidence fix (needsConfirmation forced < 0.60)
   -> normalized MachineRecognitionResult
 ```
+
+Implementation (Phase 3):
+
+- Types: `src/features/machine-scan/types` (`MachineExercise`,
+  `MachineRecognitionResult`, `MachineScan`).
+- Schema: `src/features/machine-scan/api/schema.ts`
+  (`machineRecognitionSchema`, strict Zod).
+- Errors: `src/features/machine-scan/api/errors.ts`
+  (`RecognitionError` with kinds `missing_image | invalid_response | provider_error`).
+- Provider interface: `RecognitionProvider` in
+  `src/features/machine-scan/api/mock-provider.ts`.
+- Public API: `recognizeMachine(imageUri, options?)` in
+  `src/features/machine-scan/api/recognize.ts`.
+- Provider selection is injectable through `options.provider`
+  (defaults to `mockProvider`), keeping providers replaceable.
 
 Providers must be replaceable.
 

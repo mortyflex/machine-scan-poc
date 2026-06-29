@@ -142,7 +142,11 @@ const styles = StyleSheet.create({
   deniedCard: { alignItems: 'center', gap: 12, width: '100%' },
   preview: { flex: 1 },
   overlay: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'space-between',
   },
   overlayTop: { flex: 1 },

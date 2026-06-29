@@ -84,6 +84,13 @@ Rules:
 - `0.60` to `0.84`: usable but should be visually treated as uncertain.
 - Below `0.60`: must set `needsConfirmation` to `true`.
 
+Enforcement:
+
+- The app validates every response with a strict Zod schema (`src/features/machine-scan/api/schema.ts`).
+- If the provider returns `confidence < 0.60` with `needsConfirmation = false`,
+  the app forces `needsConfirmation = true` and fills `uncertaintyReason` when missing.
+- This guarantees a conservative state even if a remote provider omits it.
+
 ### needsConfirmation
 
 Must be `true` when:
@@ -107,6 +114,29 @@ Must be `true` when:
 - Do not invent a specific machine when the image is unclear.
 - Prefer conservative answers over hallucinated machines.
 - Respond in French.
+
+## Provider Contract
+
+The mobile app never trusts raw AI JSON. Flow:
+
+```txt
+recognizeMachine(imageUri)
+  -> provider adapter (mock | remote)
+  -> raw AI response
+  -> Zod validation (machineRecognitionSchema)
+  -> conservative confidence fix (needsConfirmation forced < 0.60)
+  -> MachineRecognitionResult (typed)
+```
+
+Error kinds exposed by the app:
+
+- `missing_image`: no `imageUri` provided.
+- `invalid_response`: Zod validation failed.
+- `provider_error`: the provider threw or timed out.
+
+These are represented by `RecognitionError` in
+`src/features/machine-scan/api/errors.ts` and are the only expected
+business errors for the recognition step.
 
 ## Prompt
 

@@ -91,7 +91,7 @@ Manual iPhone validation required.
 
 ## Phase 3 — Machine Recognition Contract
 
-Status: TODO
+Status: DONE
 
 Goals:
 
@@ -106,6 +106,28 @@ Done when:
 - Invalid response is rejected.
 - Low confidence state is represented.
 - Recognition code is independent from UI.
+
+Notes:
+
+- Types added in `src/features/machine-scan/types`:
+  `MachineExercise`, `MachineRecognitionResult`, `MachineScan`.
+- Strict Zod schema in `src/features/machine-scan/api/schema.ts`:
+  enums (`difficulty`, `machineType`), `0..1` confidence, non-empty strings,
+  arrays of strings, `possibleExercises` at least one, `uncertaintyReason`
+  nullable.
+- Mock provider in `src/features/machine-scan/api/mock-provider.ts`:
+  returns a leg press result, simulates ~600ms latency, refuses empty
+  `imageUri`, independent from UI.
+- Public API `recognizeMachine(imageUri)` in
+  `src/features/machine-scan/api/recognize.ts`: validates via Zod, forces
+  `needsConfirmation` when `confidence < 0.60`, throws typed
+  `RecognitionError` (`missing_image | invalid_response | provider_error`).
+- Tests in `src/features/machine-scan/api/recognize.test.ts` (no framework,
+  run via Node built-in test runner + TypeScript build): 11 cases covering
+  schema accept/reject, missing image, valid result, low confidence forcing,
+  invalid response, provider error, mock refusal, type narrowing.
+- `scan-result` screen intentionally NOT wired to the provider in this phase
+  (planned for Phase 4).
 
 ## Phase 4 — Scan Result
 

@@ -45,6 +45,23 @@ Phase 2 detail:
 - Non-machine result does not create fake exercises.
 - Missing image URI shows error state.
 
+Phase 3 detail (automated, no framework — run via Node test runner):
+
+- `machineRecognitionSchema` accepts the contract example.
+- `machineRecognitionSchema` rejects invalid `difficulty` (e.g. `'expert'`).
+- `machineRecognitionSchema` rejects `confidence` outside `0..1`.
+- `machineRecognitionSchema` rejects empty `possibleExercises`.
+- `recognizeMachine('')` throws `RecognitionError` with kind `missing_image`.
+- `recognizeMachine('mock://...')` returns a valid typed result.
+- `recognizeMachine` forces `needsConfirmation = true` when `confidence < 0.60`.
+- `recognizeMachine` rejects an invalid provider response with kind
+  `invalid_response`.
+- `recognizeMachine` wraps a throwing provider as `provider_error`.
+- `mockProvider` refuses an empty `imageUri`.
+- `isRecognitionError` narrows the error type.
+
+Manual: app should remain openable; no UI wiring in this phase.
+
 ### Scan Result
 
 - Captured image is visible.
