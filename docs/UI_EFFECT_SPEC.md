@@ -31,6 +31,43 @@ Use:
 - Result label appearing from behind the image.
 - Machine result card sliding upward.
 
+## Delivered V1 (Phase 6)
+
+The V1 effect is implemented in
+`src/features/machine-scan/components/MachineRevealEffect.tsx` using
+React Native Reanimated only (no Skia), for reliability in Expo Go on
+SDK 54. It fakes the reveal without real segmentation.
+
+Delivered elements:
+
+- Captured image as background (`expo-image`, `contentFit: cover`); falls
+  back to a clean dark zone if the image fails to load.
+- Progressive background dim (overlay `opacity 0 -> 0.5`, ~500ms after a
+  100ms delay).
+- Subtle photo zoom (`scale 1 -> 1.05`, ~1400ms ease-out).
+- Focus ring + halo scaling in around the approximate central object area
+  (ring scale `0.6 -> 1`, ~500ms after a 250ms delay).
+- Six staggered, gently pulsing particles positioned around the ring.
+- Loading caption ("Analyse de la machine…") during loading, fading out
+  on success/error.
+- Machine name label appearing on success (opacity + translateY), with an
+  "À confirmer" tag when `needsConfirmation`.
+- Result card slides upward via `FadeInUp` on success.
+
+Behaviour by state:
+
+- Loading: full reveal timeline plays; the loading caption is visible.
+- Success: label reveals; result card slides in; the effect does not hide
+  the result for too long and adds no artificial delay to the flow.
+- Low confidence: label shows the machine name with an "À confirmer" tag.
+- Error: ring/particles fade out, photo stays lightly dimmed, and the
+  error card appears below — error state is never blocked.
+
+Skipped for V1 (deferred):
+
+- Real segmentation, bounding box, background blur, and Skia-based layers
+  (see Effect V2 / V3).
+
 ## Effect V2
 
 Use:

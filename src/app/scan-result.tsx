@@ -1,18 +1,21 @@
 import { Link, useLocalSearchParams } from 'expo-router';
-import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { recognizeMachine } from '@/features/machine-scan/api';
 import type { RecognitionErrorKind } from '@/features/machine-scan/api';
-import { MachineResultCard } from '@/features/machine-scan/components';
+import {
+  MachineRevealEffect,
+  MachineResultCard,
+} from '@/features/machine-scan/components';
 import {
   saveMachineScan,
   toMachineScanInput,
 } from '@/features/machine-scan/storage';
 import type { MachineRecognitionResult } from '@/features/machine-scan/types';
 import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
-import { spacing, useAppTheme } from '@/shared/theme';
+import { spacing } from '@/shared/theme';
 
 type ScanState =
   | { status: 'idle' }
@@ -69,6 +72,13 @@ export default function ScanResultScreen() {
 
   const handleRetry = () => setRetryCount((count) => count + 1);
 
+  const revealStatus: 'loading' | 'success' | 'error' =
+    scanState.status === 'success'
+      ? 'success'
+      : scanState.status === 'error'
+        ? 'error'
+        : 'loading';
+
   if (!imageUri) {
     return <MissingImageScreen />;
   }
@@ -81,23 +91,32 @@ export default function ScanResultScreen() {
       >
         <AppText variant="title">Résultat du scan</AppText>
 
-        <Card style={styles.imageCard}>
-          <Image
-            source={{ uri: imageUri }}
-            style={styles.image}
-            contentFit="contain"
-          />
-        </Card>
+        <MachineRevealEffect
+          imageUri={imageUri}
+          status={revealStatus}
+          machineName={
+            scanState.status === 'success'
+              ? scanState.data.machineName
+              : undefined
+          }
+          needsConfirmation={
+            scanState.status === 'success'
+              ? scanState.data.needsConfirmation
+              : undefined
+          }
+        />
 
-        {scanState.status === 'loading' ? <LoadingBlock /> : null}
         {scanState.status === 'error' ? (
           <ErrorBlock kind={scanState.kind} onRetry={handleRetry} />
         ) : null}
         {scanState.status === 'success' ? (
-          <View style={styles.successBlock}>
+          <Animated.View
+            entering={FadeInUp.delay(100).duration(450)}
+            style={styles.successBlock}
+          >
             <MachineResultCard result={scanState.data} />
             <SaveBlock data={scanState.data} imageUri={imageUri} />
-          </View>
+          </Animated.View>
         ) : null}
 
         <View style={styles.actions}>
@@ -113,18 +132,6 @@ export default function ScanResultScreen() {
         </View>
       </ScrollView>
     </Screen>
-  );
-}
-
-function LoadingBlock() {
-  const theme = useAppTheme();
-  return (
-    <Card style={styles.stateCard}>
-      <ActivityIndicator color={theme.colors.primary} />
-      <AppText variant="body" color="textSecondary" align="center">
-        Analyse de la machine…
-      </AppText>
-    </Card>
   );
 }
 
@@ -229,15 +236,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
     paddingVertical: spacing.md,
-  },
-  imageCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    backgroundColor: '#000',
   },
   stateCard: {
     gap: spacing.sm,

@@ -83,6 +83,9 @@ components independent from Expo Router:
 - `MuscleTags`: primary and secondary muscle pills.
 - `ExerciseList`: list of exercises with difficulty badge, setup,
   execution, common mistakes, and safety notes.
+- `MachineRevealEffect` (Phase 6): Reanimated-only premium reveal
+  animation (dim, zoom, focus ring, halo, particles, label) shown during
+  recognition loading; independent from Expo Router.
 
 The `scan-result` route (`src/app/scan-result.tsx`) owns the runtime
 state machine (missing / loading / success / error) and wires

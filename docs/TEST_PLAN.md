@@ -115,13 +115,23 @@ Manual: app should remain openable; no UI wiring in this phase.
   document directory).
 - Deleting a machine removes it from the list after restart.
 
-### Reveal Effect
+### Reveal Effect (Phase 6)
 
-- Animation starts after capture.
-- Animation does not block result rendering.
-- Error state still works.
-- App remains responsive.
-- Animation does not feel too long.
+- The captured photo shows as the reveal background; if the image cannot
+  load, a clean dark zone is shown instead of crashing.
+- Background dims progressively and the photo zooms slightly during loading.
+- A focus ring + halo scale in around the central area, with staggered
+  pulsing particles around the ring.
+- The "Analyse de la machine…" caption is visible during loading.
+- On success the machine name label appears (with "À confirmer" when
+  `needsConfirmation`), and the result card slides in (`FadeInUp`).
+- The animation does not add an artificial delay to the flow and does not
+  hide the result for too long.
+- On error the ring/particles fade out, the photo stays dimmed, and the
+  error card appears below — error state is never blocked.
+- The animation does not break save / saved / SQLite persistence or the
+  existing CTAs.
+- App remains responsive on iPhone.
 
 ### Remote AI
 

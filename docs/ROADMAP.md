@@ -220,7 +220,7 @@ Notes:
 
 ## Phase 6 — Reveal Effect V1
 
-Status: TODO
+Status: DONE
 
 Goals:
 
@@ -236,6 +236,33 @@ Done when:
 - Result card appears after animation.
 - Effect does not block success/error states.
 - App remains responsive.
+
+Notes:
+
+- Pure component `src/features/machine-scan/components/MachineRevealEffect.tsx`,
+  independent from Expo Router. Props: `imageUri`, `machineName?`,
+  `status: 'loading' | 'success' | 'error'`, `needsConfirmation?`.
+- Built with React Native Reanimated only (no Skia) for reliability in
+  Expo Go on SDK 54. Skia was intentionally skipped to avoid blocking the
+  phase; the effect fakes the reveal without real segmentation.
+- V1 timeline: progressive background dim (`opacity 0 -> 0.5`), subtle
+  photo zoom (`scale 1 -> 1.05`), focus ring + halo scaling in around the
+  approximate central object area, six staggered pulsing particles around
+  the ring, a loading caption ("Analyse de la machine…") during loading,
+  and the machine name label appearing on success (with an "À confirmer"
+  tag when `needsConfirmation`).
+- The timeline plays during the mock loading (~600ms) and does not add an
+  artificial delay to the flow. On success the machine result card slides
+  in with `FadeInUp`; the label and result remain readable.
+- On error the effect dims the photo lightly, fades out the ring/particles,
+  and lets the error card appear below — error state is never blocked.
+- If the captured image cannot be displayed, the effect shows a clean dark
+  zone and the flow continues without crashing.
+- All existing states preserved: missing image, loading, success, error,
+  low-confidence, save (idle/saving/saved/error), SQLite persistence, and
+  CTAs.
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
 
 ## Phase 7 — Real AI Provider
 
