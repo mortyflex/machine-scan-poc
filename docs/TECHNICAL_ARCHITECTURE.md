@@ -72,6 +72,24 @@ Responsible for:
 - Exercise list.
 - Storage repository.
 
+Result UI components (Phase 4) live in
+`src/features/machine-scan/components/` and are pure presentational
+components independent from Expo Router:
+
+- `MachineResultCard`: orchestrates the full machine fiche (name, type,
+  confidence, description, alternative names, muscles, exercises).
+- `RecognitionConfidence`: confidence percent, "À confirmer" badge and
+  uncertainty reason for low-confidence results.
+- `MuscleTags`: primary and secondary muscle pills.
+- `ExerciseList`: list of exercises with difficulty badge, setup,
+  execution, common mistakes, and safety notes.
+
+The `scan-result` route (`src/app/scan-result.tsx`) owns the runtime
+state machine (missing / loading / success / error) and wires
+`recognizeMachine` to the components. It branches on `result.ok` without
+try/catch for expected business errors; a defensive `.catch()` only
+covers impossible failures as `provider_error`.
+
 ### Storage
 
 Use local SQLite for POC.

@@ -63,16 +63,26 @@ Phase 3 detail (automated, no framework — run via Node test runner):
 
 Manual: app should remain openable; no UI wiring in this phase.
 
-### Scan Result
+### Scan Result (Phase 4)
 
-- Captured image is visible.
-- Loading state is visible.
-- Machine name is visible.
-- Confidence is visible.
-- Muscles are visible.
-- Exercises are visible.
-- Save button is visible.
-- Error state has a retry or back action.
+- Captured photo is visible at the top when `imageUri` is present.
+- Loading state shows "Analyse de la machine…" with a spinner.
+- On success: machine name, type, confidence, description, alternative
+  names, primary/secondary muscles, and possible exercises are visible.
+- Each exercise shows name, difficulty badge, setup, execution, common
+  mistakes, and safety notes.
+- Low-confidence (`needsConfirmation` or `confidence < 0.60`) shows an
+  "À confirmer" badge and the uncertainty reason when present.
+- Error state shows a readable message per `error.kind`
+  (`missing_image | invalid_response | provider_error`) — no technical
+  stack is exposed.
+- Error state offers a "Réessayer" action that re-runs recognition.
+- "Reprendre une photo" navigates back to `/camera` (replace).
+- "Sauvegarder cette machine" is disabled with a "Disponible en Phase 5"
+  note.
+- "Accueil" navigates to `/` (replace).
+- "Image manquante" state appears when navigated to without `imageUri`,
+  with "Ouvrir la caméra" and "Accueil" CTAs.
 
 ### Saved Machines
 

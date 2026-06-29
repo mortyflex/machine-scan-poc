@@ -134,7 +134,7 @@ Notes:
 
 ## Phase 4 — Scan Result
 
-Status: TODO
+Status: DONE
 
 Goals:
 
@@ -149,6 +149,28 @@ Done when:
 - Mock result appears.
 - Exercises are readable.
 - Error and loading states exist.
+
+Notes:
+
+- `src/app/scan-result.tsx` reads `imageUri` from Expo Router params,
+  launches `recognizeMachine(imageUri)` on mount, and branches on the
+  `RecognitionResult` (`ok | error`) without try/catch for expected states.
+- States handled: missing image, loading, success, error (mapped by
+  `error.kind`: `missing_image | invalid_response | provider_error`),
+  low-confidence ("À confirmer" badge + uncertainty reason).
+- Success fiche built from feature components under
+  `src/features/machine-scan/components/`: `MachineResultCard`,
+  `RecognitionConfidence`, `MuscleTags`, `ExerciseList`. These are pure
+  presentational components, independent from Expo Router.
+- Each exercise shows name, difficulty badge, setup, execution, common
+  mistakes, and safety notes.
+- CTAs: "Reprendre une photo" (replace to `/camera`), "Accueil" (replace
+  to `/`), and a disabled "Sauvegarder cette machine" placeholder tagged
+  "Disponible en Phase 5".
+- Save, reveal effect, and real AI are intentionally out of scope
+  (Phases 5, 6, 7).
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
 
 ## Phase 5 — Local Persistence
 
