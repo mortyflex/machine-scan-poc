@@ -75,10 +75,14 @@ Manual: app should remain openable; no UI wiring in this phase.
 - Loading state: a clean photo card (contain, no squeeze) +
   "Analyse de la machine…" spinner.
 - On success, a **validation stage** appears first (not the full fiche):
-  light bg, soft yellow glow, full photo in a stable-ratio card (no fake
-  cutout, no squeeze), premium label (machine name + type + "À confirmer"
-  pill if `needsConfirmation`), and actions `Refaire` / `Valider` /
-  `Rejeter` + hint.
+  Skia-rendered object area (light bg `#F8F8F5`, subtle dotted pattern,
+  soft yellow radial glow, soft elliptical shadow). Without a real
+  `cutoutUri`: a stable-ratio white card with the full photo
+  (`fit="contain"`, no squeeze, no fake cutout) + a discrete
+  "Détourage bientôt disponible" hint. With a real `cutoutUri` (future):
+  the transparent cutout object floats centered above the glow/shadow.
+  Premium label (machine name + type + "À confirmer" pill if
+  `needsConfirmation`); actions `Refaire` / `Valider` / `Rejeter` + hint.
 - The full fiche (name, confidence, description, muscles, exercises with
   setup/execution/mistakes/safety) and the save button are shown **only
   after the user presses `Valider`**.

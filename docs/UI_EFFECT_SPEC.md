@@ -229,6 +229,72 @@ type ScanValidationStageProps = {
 - After the user presses `Valider`, the details fiche slides in
   (`FadeInUp`).
 
+## Phase 6.5 — Skia cutout renderer
+
+QA decision:
+
+- CapWords-like validation requires a real object cutout renderer
+- Skia is introduced for the validation visual layer
+- `cutoutUri` is the source of truth for real cutout display
+- without `cutoutUri`, the app shows an honest photo fallback
+- no fake rectangle segmentation is allowed
+
+### `SkiaCutoutStage` (pure visual, no navigation/SQLite/AI)
+
+```ts
+type SkiaCutoutStageProps = {
+  imageUri: string;
+  cutoutUri?: string;
+  machineName: string;
+  machineSubtitle?: string;
+  needsConfirmation?: boolean;
+  mode?: 'real-cutout' | 'photo-fallback';
+};
+```
+
+Renders a Skia `Canvas` filling the object area:
+
+- `Fill` background `#F8F8F5`.
+- Sparse subtle dotted pattern (small low-opacity circles on a 30px grid).
+- Soft yellow radial `RadialGradient` glow behind the object
+  (`rgba(255,233,168,..) -> rgba(248,248,245,0)`).
+- Soft elliptical shadow under the object (`Oval` + `Blur`).
+- Real-cutout mode (`cutoutUri` provided, image loaded via `useImage`):
+  the transparent cutout image is drawn centered with `fit="contain"`
+  (~52% of canvas height), floating above the glow/shadow. No white card,
+  no fake cutout. If the cutout image fails to load, the stage silently
+  falls back to `photo-fallback`.
+- Photo-fallback mode (no `cutoutUri`, or cutout load failure): a stable-
+  ratio white `RoundedRect` card (width ≤ 84% / 340px, ratio 0.74) with
+  the original photo drawn `fit="contain"` inside (inset 8px) — no squeeze,
+  no crop, no fake cutout. A discrete `Détourage bientôt disponible` hint
+  appears under the label.
+
+### Label (React Native, overlaid below the Canvas)
+
+- machine name `#111`, fontWeight `900`, ~30, light textShadow.
+- subtitle (e.g. machine type), `#6B6B6B`, 16.
+- small discrete "À confirmer" pill if `needsConfirmation`.
+- No gray blobs/pipes behind the title.
+
+### Actions (React Native, in `ScanValidationStage`, not Skia)
+
+`Refaire` / `Valider` (primary) / `Rejeter` + discrete hint, unchanged.
+
+### Future-ready
+
+When a backend segmentation provides a real `cutoutUri`, the same stage
+renders the true detoured object with glow + shadow — no code change
+needed. No cutout is generated on-device in this phase.
+
+### Compatibility
+
+- Uses `@shopify/react-native-skia` 2.2.12 (already installed), no extra
+  native module, no prebuild.
+- If a real Skia runtime error occurred, the previous RN-only
+  `ScanValidationStage` render is recoverable via git; documented as a
+  fallback.
+
 
 
 

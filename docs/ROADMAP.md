@@ -422,6 +422,48 @@ Notes:
 - Manual visual validation required on a physical device before the human
   owner accepts the phase.
 
+## Phase 6.5 — Skia cutout renderer
+
+Status: DONE
+
+QA decision:
+
+- CapWords-like validation requires a real object cutout renderer
+- Skia is introduced for the validation visual layer
+- `cutoutUri` is the source of truth for real cutout display
+- without `cutoutUri`, the app shows an honest photo fallback
+- no fake rectangle segmentation is allowed
+
+Notes:
+
+- New pure visual component `SkiaCutoutStage`
+  (`src/features/machine-scan/components/SkiaCutoutStage.tsx`) using
+  `@shopify/react-native-skia` 2.2.12 (already installed — no new native
+  module, no prebuild). Renders a Skia `Canvas` with: background `#F8F8F5`,
+  sparse subtle dotted pattern, yellow radial glow, soft elliptical shadow
+  (`Oval` + `Blur`), and the object.
+- Mode `real-cutout` (when a real `cutoutUri` is provided and the image
+  loads via `useImage`): the transparent cutout is drawn centered with
+  `fit="contain"` (~52% of canvas height), floating above glow/shadow. No
+  white card, no fake cutout. On load failure, silently falls back to
+  `photo-fallback`.
+- Mode `photo-fallback` (no `cutoutUri`, or load failure): a stable-ratio
+  white `RoundedRect` card with the original photo `fit="contain"` inside
+  (inset 8px) — no squeeze, no crop, no fake cutout. A discrete
+  "Détourage bientôt disponible" hint appears under the label.
+- `ScanValidationStage` now delegates the object visual to
+  `SkiaCutoutStage` (canvas + label) and keeps the actions (`Refaire` /
+  `Valider` / `Rejeter`) + hint in React Native.
+- Label is premium typography in RN (machine name `#111` / 900 + subtitle
+  + small "À confirmer" pill); no gray blobs.
+- `cutoutUri` is accepted through `ScanValidationStage` already; no SQLite
+  migration needed (no cutout is stored today).
+- No cutout is generated on-device; no IA réelle; no backend; no prebuild.
+- All existing flows preserved (missing/loading/error/low-confidence/
+  save/saved/SQLite/saved-machines/machine-detail/tests/navigation).
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
+
 ## Phase 7 — Real AI Provider
 
 Status: TODO

@@ -20,3 +20,7 @@ export {
   ScanValidationStage,
   type ScanValidationStageProps,
 } from './ScanValidationStage';
+export {
+  SkiaCutoutStage,
+  type SkiaCutoutStageProps,
+} from './SkiaCutoutStage';

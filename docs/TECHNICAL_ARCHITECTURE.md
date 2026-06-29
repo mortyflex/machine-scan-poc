@@ -101,6 +101,13 @@ components independent from Expo Router:
   actions. Future-ready for real segmentation.
 - `ScanValidationActions` (Phase 6.4): `Refaire` / `Valider` / `Rejeter`
   action row used by the validation stage.
+- `SkiaCutoutStage` (Phase 6.5): pure visual Skia renderer for the
+  validation object. Renders a `Canvas` with background, subtle dotted
+  pattern, yellow radial glow, soft elliptical shadow, and either a real
+  `cutoutUri` object (future-ready) or an honest photo-card fallback (no
+  squeeze, no fake cutout). Independent from Expo Router / SQLite / AI.
+  `ScanValidationStage` now delegates the object visual to
+  `SkiaCutoutStage` and keeps the actions in React Native.
 
 The `scan-result` route (`src/app/scan-result.tsx`) owns the runtime
 state machine (missing / loading / success / error) and wires
