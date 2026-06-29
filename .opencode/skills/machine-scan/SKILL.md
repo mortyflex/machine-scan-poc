@@ -43,6 +43,40 @@ Handle:
 - Network failure.
 - Provider timeout.
 
+## Recognition Error Handling
+
+For the public recognition API, prefer a discriminated union result instead of throwing custom Error classes.
+
+Use:
+
+```ts
+
+type RecognitionResult =
+
+  | {
+
+      ok: true;
+
+      data: MachineRecognitionResult;
+
+    }
+
+  | {
+
+      ok: false;
+
+      error: {
+
+        kind: 'missing_image' | 'invalid_response' | 'provider_error';
+
+        message: string;
+
+        cause?: unknown;
+
+      };
+
+    };
+
 ## Files Usually Involved
 
 - `src/features/machine-scan/types`
@@ -51,3 +85,4 @@ Handle:
 - `docs/AI_CONTRACT.md`
 - `docs/ROADMAP.md`
 - `docs/TEST_PLAN.md`
+```

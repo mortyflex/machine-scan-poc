@@ -369,6 +369,27 @@ When confidence is low, the app must show uncertainty instead of pretending to b
 - No API key should be exposed in mobile code.
 - If the image is unclear, return a low-confidence or confirmation-required result.
 
+## Error Handling Rules
+
+Prefer typed result objects for expected business errors.
+
+For feature APIs used by UI components, prefer this shape:
+
+````ts
+type FeatureResult<TData, TErrorKind extends string> =
+  | {
+      ok: true;
+      data: TData;
+    }
+  | {
+      ok: false;
+      error: {
+        kind: TErrorKind;
+        message: string;
+        cause?: unknown;
+      };
+    };
+
 ## UI Rules
 
 - Mobile-first.
@@ -386,7 +407,7 @@ Never use:
 
 ```bash
 git add .
-```
+````
 
 Use targeted adds only.
 
