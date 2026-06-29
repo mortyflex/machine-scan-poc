@@ -115,34 +115,31 @@ Manual: app should remain openable; no UI wiring in this phase.
   document directory).
 - Deleting a machine removes it from the list after restart.
 
-### Reveal Effect (Phase 6.2 — tuned after iPhone QA)
+### Reveal Effect (Phase 6.3 — honest photo-card reveal)
 
-- The captured photo is visible full-frame, then the background visibly
-  dissolves: photo opacity drops to near-zero while a bright neutral
-  (`#FAFAFA`) background appears.
-- The pseudo-cutout is large (90% x 58%) and clearly visible immediately —
-  not a small vignette; its high `borderRadius` (48) + multi-layer edge
-  (halo + border + highlight) makes it read as a sticker, not a cropped
-  rectangle.
-- Deterministic dust fragments are clearly visible: 32 fragments, sizes
-  4-12px, peak opacity 1, flying outward 24-90px with rotation; some render
-  in front of the object. Not confetti / sparkles.
-- The pseudo-cutout detaches strongly: `scale -> 1.13`, `translateY -42`,
-  `translateX 4`, `rotate -1.2deg`.
-- A visible soft elliptical shadow (3-layer) appears under the floating
-  object; no rectangular bar remains below.
-- On success the recognition label appears under the object (delay ~1700ms):
-  machine name (bold) + "Machine détectée" + "À confirmer" pill when
-  `needsConfirmation`; the result card slides in after the reveal
-  (`FadeInUp.delay(1100)` after success) and stays readable.
+- The captured photo is shown in full via `contentFit: 'contain'` — no
+  weird left/right cropping. The whole machine is visible.
+- No fake object cutout: without a real `cutoutUri`, there is no central
+  cropped rectangle / vignette pretending to detour the object.
+- The photo appears on a bright neutral card (`#FAFAFA`) and settles
+  gently (`scale 1 -> 0.98`, slight lift) like a sticker/card.
+- A soft drop shadow is visible under the card (no rectangular bar, no
+  gray blobs/pipes behind the title).
+- Sober deterministic fragments dissolve around the photo (off-white /
+  light gray, no confetti / sparkles / color) and fade.
+- The recognition label is premium typography under the photo: machine name
+  (black, fontWeight 900, light textShadow) + "Machine détectée" + a small
+  discrete "À confirmer" pill when `needsConfirmation`. No heavy gray pill.
 - During loading the "Analyse de la machine…" caption is visible.
-- On error the dissolve is aborted (photo stays visible), "Analyse
-  impossible" shows, and the error card appears below — never blocked.
-- If the image fails to load, a clean bright background is shown with the
+- On error the reveal aborts, "Analyse impossible" shows, and the error
+  card appears below — never blocked.
+- If the image fails to load, a clean bright card is shown with the
   loading/error label; no crash.
-- The slower timeline (~2000-2200ms) gives time to perceive dissolution,
-  floating, shadow and label; no infinite animations after success; app
-  remains responsive on iPhone.
+- The slower timeline (~1800-2200ms) lets the dissolution, settle, shadow
+  and label be perceived; the result card slides in after the reveal
+  (`FadeInUp.delay(1300)` after success). No infinite animations after
+  success; app remains responsive on iPhone.
+- Save / saved / SQLite persistence and CTAs remain functional.
 
 ### Remote AI
 

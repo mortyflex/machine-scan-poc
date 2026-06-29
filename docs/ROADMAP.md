@@ -340,6 +340,47 @@ Notes:
 - Manual visual validation required on a physical device before the human
   owner accepts the phase.
 
+## Phase 6.3 — Honest CapWords-style reveal
+
+Status: DONE
+
+QA decision:
+
+- pseudo-cutout rectangle was rejected
+- without real segmentation, the app must not fake object cutout
+- default mode is now photo-card reveal
+- real cutout mode is reserved for future cutoutUri
+- label redesigned with simple premium typography
+
+Notes:
+
+- The fake pseudo-cutout (duplicated image clipped to a central rounded
+  rectangle) is removed entirely. Without a real `cutoutUri`, the effect
+  shows the full captured photo as a premium card — no misleading object
+  extraction.
+- `effectLevel` is now `'photo-card' | 'real-cutout'` (default inferred
+  from `cutoutUri`: `real-cutout` only when a real cutout is provided,
+  otherwise `photo-card`).
+- Photo rendering fixed: `contentFit: 'contain'` so the whole photo is
+  visible (no more weird left/right cropping).
+- Photo-card mode: bright neutral card (`#FAFAFA`), 28 sober deterministic
+  fragments around the photo, photo settles (`scale 1 -> 0.98`,
+  `translateY -6`), soft drop shadow under the card (iOS shadowOpacity /
+  Android elevation), premium label below.
+- Label redesigned: machine name `#111111`, fontWeight `900`, fontSize ~30,
+  light textShadow; subtitle "Machine détectée"; small discrete "À
+  confirmer" pill. Removed the decorative gray blobs/pipes that sat behind
+  the title.
+- `real-cutout` mode (future, only with `cutoutUri`): cutout image floats
+  (`scale 1 -> 1.13`, `translateY -42`, `rotate -1.2`), soft elliptical
+  shadow under the object, label below. Not exercised today.
+- Timeline ~1800-2200ms: photo 0-300, bright card + fragments 300-800,
+  settle + shadow 800-1300, label 1300-1800, result card after.
+- All existing flows preserved (missing/loading/success/error/
+  low-confidence/save/saved/SQLite/CTAs/navigation/tests).
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
+
 ## Phase 7 — Real AI Provider
 
 Status: TODO

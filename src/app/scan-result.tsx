@@ -111,7 +111,7 @@ export default function ScanResultScreen() {
         ) : null}
         {scanState.status === 'success' ? (
           <Animated.View
-            entering={FadeInUp.delay(1100).duration(500)}
+            entering={FadeInUp.delay(1300).duration(500)}
             style={styles.successBlock}
           >
             <MachineResultCard result={scanState.data} />
