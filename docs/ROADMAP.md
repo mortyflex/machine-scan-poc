@@ -302,6 +302,44 @@ Notes:
 - Manual visual validation required on a physical device before the human
   owner accepts the phase.
 
+## Phase 6.2 — Visual QA tuning
+
+Status: DONE
+
+Adjusted after iPhone QA:
+
+- larger pseudo-cutout
+- less square sticker shape
+- stronger fragments
+- removed unexplained bottom bar
+- stronger floating movement
+- visible elliptical shadow
+- slower reveal timeline
+
+Notes:
+
+- Pseudo-cutout enlarged to `90% x 58%` (centerY 44%), `focusRadius 48`
+  with a multi-layer edge (outer halo + main border + inner highlight) so
+  it no longer reads as a cropped rectangle.
+- Fragments reinforced: 32 total (24 back / 8 front over the object),
+  sizes 4-12px, peak opacity 1, travel 24-90px, rotate -33..33deg,
+  duration 800ms.
+- The hard pill that read as a "bar" is replaced by a 3-layer soft
+  elliptical shadow (66% / 55% / 42% width, blur simulated), opacity
+  `0 -> 0.30`, `scaleX 0.75 -> 1.05`, appearing at ~1200ms.
+- Stronger floating: `scale 1 -> 1.13`, `translateY 0 -> -42`,
+  `translateX 0 -> 4`, `rotate 0 -> -1.2deg`.
+- Slower timeline ~2000-2200ms: dissolve 250-1200, cutout 600-1550,
+  shadow 1200-1700, label 1700-2200.
+- The result card entrance is delayed (`FadeInUp.delay(1100)`) so the
+  reveal reads before the fiche slides in; no artificial delay on the
+  recognition itself.
+- `effectLevel` default remains `'pseudo-cutout'`; `'basic'` kept as
+  fallback. All existing flows preserved (missing/loading/success/error/
+  low-confidence/save/saved/SQLite/CTAs).
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
+
 ## Phase 7 — Real AI Provider
 
 Status: TODO

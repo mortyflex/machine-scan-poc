@@ -115,29 +115,34 @@ Manual: app should remain openable; no UI wiring in this phase.
   document directory).
 - Deleting a machine removes it from the list after restart.
 
-### Reveal Effect (Phase 6.1 — CapWords-like pseudo cutout)
+### Reveal Effect (Phase 6.2 — tuned after iPhone QA)
 
 - The captured photo is visible full-frame, then the background visibly
   dissolves: photo opacity drops to near-zero while a bright neutral
   (`#FAFAFA`) background appears.
-- Deterministic dust fragments fly outward from around the central focus
-  area and fade out (not confetti / sparkles).
-- The central pseudo-cutout region appears to detach from the scene:
-  it scales up (`1 -> 1.08`), lifts (`translateY -24`), rotates slightly,
-  and gains a white edge glow.
-- A soft elliptical shadow appears under the floating object.
-- On success the recognition label appears under the object: machine name
-  (bold) + "Machine détectée" + "À confirmer" pill when
-  `needsConfirmation`; the result card slides in (`FadeInUp`) and stays
-  readable.
+- The pseudo-cutout is large (90% x 58%) and clearly visible immediately —
+  not a small vignette; its high `borderRadius` (48) + multi-layer edge
+  (halo + border + highlight) makes it read as a sticker, not a cropped
+  rectangle.
+- Deterministic dust fragments are clearly visible: 32 fragments, sizes
+  4-12px, peak opacity 1, flying outward 24-90px with rotation; some render
+  in front of the object. Not confetti / sparkles.
+- The pseudo-cutout detaches strongly: `scale -> 1.13`, `translateY -42`,
+  `translateX 4`, `rotate -1.2deg`.
+- A visible soft elliptical shadow (3-layer) appears under the floating
+  object; no rectangular bar remains below.
+- On success the recognition label appears under the object (delay ~1700ms):
+  machine name (bold) + "Machine détectée" + "À confirmer" pill when
+  `needsConfirmation`; the result card slides in after the reveal
+  (`FadeInUp.delay(1100)` after success) and stays readable.
 - During loading the "Analyse de la machine…" caption is visible.
 - On error the dissolve is aborted (photo stays visible), "Analyse
   impossible" shows, and the error card appears below — never blocked.
 - If the image fails to load, a clean bright background is shown with the
   loading/error label; no crash.
-- The animation adds no artificial delay to the ~600ms mock flow and does
-  not break save / saved / SQLite persistence or the existing CTAs.
-- No infinite animations after success; app remains responsive on iPhone.
+- The slower timeline (~2000-2200ms) gives time to perceive dissolution,
+  floating, shadow and label; no infinite animations after success; app
+  remains responsive on iPhone.
 
 ### Remote AI
 

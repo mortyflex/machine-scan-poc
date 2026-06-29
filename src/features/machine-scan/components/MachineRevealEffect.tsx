@@ -16,6 +16,7 @@ import Animated, {
   withDelay,
   withSequence,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 export type MachineRevealEffectLevel = 'basic' | 'pseudo-cutout';
@@ -47,17 +48,27 @@ type FragmentConfig = {
   rotate: number;
   delay: number;
   color: string;
+  front: boolean;
 };
 
 const EASE_OUT = Easing.out(Easing.quad);
 const EASE_IN_OUT = Easing.inOut(Easing.quad);
 
-const FRAGMENT_COUNT = 28;
-const FRAGMENT_COLORS = ['#D9D9D6', '#EDEDEA', '#C9C9C4', '#BFC2BB', '#E3E3DF'];
+const FRAGMENT_COUNT = 32;
+const FRAGMENT_SIZES = [4, 6, 7, 9, 12];
+const FRAGMENT_COLORS = [
+  '#EDEDEA',
+  '#D9D9D6',
+  '#C9C9C4',
+  '#BFC2BB',
+  'rgba(220,220,216,0.65)',
+  'rgba(255,255,255,0.8)',
+];
 
 const BRIGHT_BG = '#FAFAFA';
 const OBJECT_TEXT = '#1A1A1A';
 const OBJECT_SUBTEXT = '#6B6B6B';
+const SHADOW_COLOR = '#1A1A1A';
 
 export function MachineRevealEffect({
   imageUri,
@@ -141,34 +152,40 @@ function PseudoCutoutReveal({
   const dustVeilOpacity = useSharedValue(0);
   const cutoutScale = useSharedValue(1);
   const cutoutTranslateY = useSharedValue(0);
+  const cutoutTranslateX = useSharedValue(0);
   const cutoutRotate = useSharedValue(0);
   const edgeGlowOpacity = useSharedValue(0);
   const shadowOpacity = useSharedValue(0);
-  const shadowScale = useSharedValue(0.7);
+  const shadowScale = useSharedValue(0.75);
   const labelOpacity = useSharedValue(0);
   const labelTranslateY = useSharedValue(8);
   const labelScale = useSharedValue(0.96);
   const captionOpacity = useSharedValue(1);
 
   useEffect(() => {
-    bgPhotoOpacity.value = withDelay(350, withTiming(0.08, { duration: 650, easing: EASE_IN_OUT }));
-    brightBgOpacity.value = withDelay(350, withTiming(1, { duration: 700, easing: EASE_IN_OUT }));
+    // Dissolve (250 - 1200ms)
+    bgPhotoOpacity.value = withDelay(250, withTiming(0.08, { duration: 950, easing: EASE_IN_OUT }));
+    brightBgOpacity.value = withDelay(250, withTiming(1, { duration: 950, easing: EASE_IN_OUT }));
     dustVeilOpacity.value = withDelay(
-      300,
-      withSequence(withTiming(0.3, { duration: 250 }), withTiming(0, { duration: 450 })),
+      250,
+      withSequence(withTiming(0.4, { duration: 350 }), withTiming(0, { duration: 600 })),
     );
-    cutoutScale.value = withDelay(350, withTiming(1.08, { duration: 650, easing: EASE_OUT }));
-    cutoutTranslateY.value = withDelay(350, withTiming(-24, { duration: 650, easing: EASE_OUT }));
-    cutoutRotate.value = withDelay(350, withTiming(-0.7, { duration: 800, easing: EASE_IN_OUT }));
-    edgeGlowOpacity.value = withDelay(420, withTiming(1, { duration: 400 }));
-    shadowOpacity.value = withDelay(500, withTiming(0.22, { duration: 400, easing: EASE_OUT }));
-    shadowScale.value = withDelay(500, withTiming(1, { duration: 400, easing: EASE_OUT }));
+    // Cutout detaches (600 - 1550ms)
+    cutoutScale.value = withDelay(600, withTiming(1.13, { duration: 950, easing: EASE_OUT }));
+    cutoutTranslateY.value = withDelay(600, withTiming(-42, { duration: 950, easing: EASE_OUT }));
+    cutoutTranslateX.value = withDelay(600, withTiming(4, { duration: 950, easing: EASE_OUT }));
+    cutoutRotate.value = withDelay(600, withTiming(-1.2, { duration: 1000, easing: EASE_IN_OUT }));
+    edgeGlowOpacity.value = withDelay(650, withTiming(1, { duration: 500 }));
+    // Shadow appears as the object floats (1200 - 1700ms)
+    shadowOpacity.value = withDelay(1200, withTiming(0.3, { duration: 500, easing: EASE_OUT }));
+    shadowScale.value = withDelay(1200, withTiming(1.05, { duration: 500, easing: EASE_OUT }));
   }, [
     bgPhotoOpacity,
     brightBgOpacity,
     dustVeilOpacity,
     cutoutScale,
     cutoutTranslateY,
+    cutoutTranslateX,
     cutoutRotate,
     edgeGlowOpacity,
     shadowOpacity,
@@ -177,9 +194,10 @@ function PseudoCutoutReveal({
 
   useEffect(() => {
     if (status === 'success' && machineName) {
-      labelOpacity.value = withDelay(900, withTiming(1, { duration: 400, easing: EASE_OUT }));
-      labelTranslateY.value = withDelay(900, withTiming(0, { duration: 400, easing: EASE_OUT }));
-      labelScale.value = withDelay(900, withTiming(1, { duration: 400, easing: EASE_OUT }));
+      // Label (1700 - 2200ms)
+      labelOpacity.value = withDelay(1700, withTiming(1, { duration: 500, easing: EASE_OUT }));
+      labelTranslateY.value = withDelay(1700, withTiming(0, { duration: 500, easing: EASE_OUT }));
+      labelScale.value = withDelay(1700, withTiming(1, { duration: 500, easing: EASE_OUT }));
       captionOpacity.value = withTiming(0, { duration: 300 });
     } else if (status === 'error') {
       bgPhotoOpacity.value = withTiming(1, { duration: 300 });
@@ -189,6 +207,7 @@ function PseudoCutoutReveal({
       edgeGlowOpacity.value = withTiming(0, { duration: 200 });
       cutoutScale.value = withTiming(1, { duration: 300 });
       cutoutTranslateY.value = withTiming(0, { duration: 300 });
+      cutoutTranslateX.value = withTiming(0, { duration: 300 });
       cutoutRotate.value = withTiming(0, { duration: 300 });
       labelOpacity.value = withTiming(1, { duration: 300 });
       labelTranslateY.value = withTiming(0, { duration: 300 });
@@ -204,6 +223,7 @@ function PseudoCutoutReveal({
     edgeGlowOpacity,
     cutoutScale,
     cutoutTranslateY,
+    cutoutTranslateX,
     cutoutRotate,
     labelOpacity,
     labelTranslateY,
@@ -216,16 +236,13 @@ function PseudoCutoutReveal({
   const dustVeilStyle = useAnimatedStyle(() => ({ opacity: dustVeilOpacity.value }));
   const cutoutStyle = useAnimatedStyle(() => ({
     transform: [
+      { translateX: cutoutTranslateX.value },
       { scale: cutoutScale.value },
       { translateY: cutoutTranslateY.value },
       { rotate: `${cutoutRotate.value}deg` },
     ],
   }));
   const edgeGlowStyle = useAnimatedStyle(() => ({ opacity: edgeGlowOpacity.value }));
-  const shadowStyle = useAnimatedStyle(() => ({
-    opacity: shadowOpacity.value,
-    transform: [{ scaleX: shadowScale.value }],
-  }));
   const labelStyle = useAnimatedStyle(() => ({
     opacity: labelOpacity.value,
     transform: [{ translateY: labelTranslateY.value }, { scale: labelScale.value }],
@@ -234,12 +251,14 @@ function PseudoCutoutReveal({
 
   const geometry = useMemo(() => computeGeometry(size), [size]);
   const fragments = useMemo(() => buildFragments(geometry), [geometry]);
+  const backFragments = useMemo(() => fragments.filter((f) => !f.front), [fragments]);
+  const frontFragments = useMemo(() => fragments.filter((f) => f.front), [fragments]);
 
   const hasCutout = !imageFailed && size !== null;
 
   return (
     <View onLayout={onLayout} style={styles.container}>
-      {/* Layer 1 — original photo background */}
+      {/* Layer 1 — original photo background (fades out) */}
       {!imageFailed ? (
         <Animated.View style={[styles.fullFill, bgPhotoStyle]}>
           <Image
@@ -251,34 +270,28 @@ function PseudoCutoutReveal({
         </Animated.View>
       ) : null}
 
-      {/* Layer 2 — dissolve / dust veil + fragments */}
-      <Animated.View style={[styles.fullFill, styles.dustVeil, dustVeilStyle]} pointerEvents="none" />
-      {hasCutout
-        ? fragments.map((fragment) => (
-            <Fragment key={fragment.id} config={fragment} />
-          ))
-        : null}
-
       {/* Bright neutral background (fades in) */}
       <Animated.View
         style={[styles.fullFill, { backgroundColor: BRIGHT_BG }, brightBgStyle]}
         pointerEvents="none"
       />
 
-      {/* Layer 4 — soft elliptical shadow under the object */}
+      {/* Layer 2 — dissolve / dust veil */}
+      <Animated.View style={[styles.fullFill, styles.dustVeil, dustVeilStyle]} pointerEvents="none" />
+
+      {/* Back fragments (behind the object) */}
+      {hasCutout
+        ? backFragments.map((fragment) => (
+            <Fragment key={fragment.id} config={fragment} />
+          ))
+        : null}
+
+      {/* Layer 4 — soft elliptical shadow under the floating object */}
       {hasCutout ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.shadow,
-            {
-              left: geometry.shadowLeft,
-              top: geometry.shadowTop,
-              width: geometry.shadowWidth,
-              height: geometry.shadowHeight,
-            },
-            shadowStyle,
-          ]}
+        <SoftShadow
+          geometry={geometry}
+          opacityRef={shadowOpacity}
+          scaleRef={shadowScale}
         />
       ) : null}
 
@@ -297,6 +310,21 @@ function PseudoCutoutReveal({
             cutoutStyle,
           ]}
         >
+          {/* outer soft halo (peeks around the cutout) */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.edgeHalo,
+              {
+                top: -8,
+                left: -8,
+                width: geometry.focusWidth + 16,
+                height: geometry.focusHeight + 16,
+                borderRadius: geometry.focusRadius + 8,
+              },
+              edgeGlowStyle,
+            ]}
+          />
           {cutoutUri ? (
             <Image
               source={{ uri: cutoutUri }}
@@ -327,7 +355,7 @@ function PseudoCutoutReveal({
               />
             </View>
           )}
-          {/* edge glow + subtle halo */}
+          {/* main edge border */}
           <Animated.View
             pointerEvents="none"
             style={[
@@ -340,8 +368,30 @@ function PseudoCutoutReveal({
               edgeGlowStyle,
             ]}
           />
+          {/* inner highlight */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.edgeHighlight,
+              {
+                top: 4,
+                left: 4,
+                width: geometry.focusWidth - 8,
+                height: geometry.focusHeight - 8,
+                borderRadius: Math.max(geometry.focusRadius - 6, 8),
+              },
+              edgeGlowStyle,
+            ]}
+          />
         </Animated.View>
       ) : null}
+
+      {/* Front fragments (above the object) */}
+      {hasCutout
+        ? frontFragments.map((fragment) => (
+            <Fragment key={fragment.id} config={fragment} />
+          ))
+        : null}
 
       {/* Layer 5 — recognition label */}
       <Animated.View
@@ -376,6 +426,77 @@ function PseudoCutoutReveal({
         <Text style={styles.captionText}>Analyse de la machine…</Text>
       </Animated.View>
     </View>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Soft shadow (multi-layer, blur-simulated)                                   */
+/* -------------------------------------------------------------------------- */
+
+function SoftShadow({
+  geometry,
+  opacityRef,
+  scaleRef,
+}: {
+  geometry: Geometry;
+  opacityRef: SharedValue<number>;
+  scaleRef: SharedValue<number>;
+}) {
+  const outerStyle = useAnimatedStyle(() => ({
+    opacity: opacityRef.value * 0.45,
+    transform: [{ scaleX: scaleRef.value }],
+  }));
+  const midStyle = useAnimatedStyle(() => ({
+    opacity: opacityRef.value * 0.75,
+    transform: [{ scaleX: scaleRef.value }],
+  }));
+  const coreStyle = useAnimatedStyle(() => ({
+    opacity: opacityRef.value,
+    transform: [{ scaleX: scaleRef.value }],
+  }));
+
+  return (
+    <>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.shadowBase,
+          {
+            left: geometry.shadowOuterLeft,
+            top: geometry.shadowTop,
+            width: geometry.shadowOuterWidth,
+            height: geometry.shadowOuterHeight,
+          },
+          outerStyle,
+        ]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.shadowBase,
+          {
+            left: geometry.shadowMidLeft,
+            top: geometry.shadowTop,
+            width: geometry.shadowMidWidth,
+            height: geometry.shadowMidHeight,
+          },
+          midStyle,
+        ]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.shadowBase,
+          {
+            left: geometry.shadowInnerLeft,
+            top: geometry.shadowTop,
+            width: geometry.shadowInnerWidth,
+            height: geometry.shadowInnerHeight,
+          },
+          coreStyle,
+        ]}
+      />
+    </>
   );
 }
 
@@ -462,18 +583,18 @@ function Fragment({ config }: { config: FragmentConfig }) {
   useEffect(() => {
     progress.value = withDelay(
       config.delay,
-      withTiming(1, { duration: 600, easing: EASE_OUT }),
+      withTiming(1, { duration: 800, easing: EASE_OUT }),
     );
   }, [config.delay, progress]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const p = progress.value;
     return {
-      opacity: interpolate(p, [0, 0.15, 1], [0, 0.85, 0]),
+      opacity: interpolate(p, [0, 0.1, 1], [0, 1, 0]),
       transform: [
         { translateX: p * config.tx },
         { translateY: p * config.ty },
-        { scale: interpolate(p, [0, 1], [1, 0.35]) },
+        { scale: interpolate(p, [0, 1], [1, 0.4]) },
         { rotate: `${p * config.rotate}deg` },
       ],
     };
@@ -504,10 +625,16 @@ type Geometry = {
   focusWidth: number;
   focusHeight: number;
   focusRadius: number;
-  shadowLeft: number;
   shadowTop: number;
-  shadowWidth: number;
-  shadowHeight: number;
+  shadowOuterLeft: number;
+  shadowOuterWidth: number;
+  shadowOuterHeight: number;
+  shadowMidLeft: number;
+  shadowMidWidth: number;
+  shadowMidHeight: number;
+  shadowInnerLeft: number;
+  shadowInnerWidth: number;
+  shadowInnerHeight: number;
   centerX: number;
   centerY: number;
   rx: number;
@@ -517,19 +644,27 @@ type Geometry = {
 function computeGeometry(size: Size | null): Geometry {
   const containerWidth = size?.width ?? 0;
   const containerHeight = size?.height ?? 0;
-  const focusWidth = containerWidth * 0.78;
-  const focusHeight = containerHeight * 0.46;
+  const focusWidth = containerWidth * 0.9;
+  const focusHeight = containerHeight * 0.58;
   const focusLeft = (containerWidth - focusWidth) / 2;
-  const focusTop = containerHeight * 0.19;
-  const focusRadius = 34;
-  const shadowWidth = focusWidth * 0.7;
-  const shadowHeight = 26;
-  const shadowLeft = focusLeft + (focusWidth - shadowWidth) / 2;
-  const shadowTop = focusTop + focusHeight - 10;
+  const focusTop = containerHeight * 0.15;
+  const focusRadius = 48;
   const centerX = containerWidth * 0.5;
-  const centerY = containerHeight * 0.42;
-  const rx = focusWidth * 0.5;
-  const ry = focusHeight * 0.5;
+  const centerY = containerHeight * 0.44;
+  const rx = focusWidth * 0.48;
+  const ry = focusHeight * 0.48;
+
+  const shadowTop = focusTop + focusHeight - 14;
+  const shadowOuterWidth = containerWidth * 0.66;
+  const shadowOuterHeight = 38;
+  const shadowOuterLeft = centerX - shadowOuterWidth / 2;
+  const shadowMidWidth = containerWidth * 0.55;
+  const shadowMidHeight = 28;
+  const shadowMidLeft = centerX - shadowMidWidth / 2;
+  const shadowInnerWidth = containerWidth * 0.42;
+  const shadowInnerHeight = 18;
+  const shadowInnerLeft = centerX - shadowInnerWidth / 2;
+
   return {
     containerWidth,
     containerHeight,
@@ -538,10 +673,16 @@ function computeGeometry(size: Size | null): Geometry {
     focusWidth,
     focusHeight,
     focusRadius,
-    shadowLeft,
     shadowTop,
-    shadowWidth,
-    shadowHeight,
+    shadowOuterLeft,
+    shadowOuterWidth,
+    shadowOuterHeight,
+    shadowMidLeft,
+    shadowMidWidth,
+    shadowMidHeight,
+    shadowInnerLeft,
+    shadowInnerWidth,
+    shadowInnerHeight,
     centerX,
     centerY,
     rx,
@@ -556,13 +697,14 @@ function buildFragments(geo: Geometry): FragmentConfig[] {
     const angle = (i / FRAGMENT_COUNT) * Math.PI * 2 + 0.2;
     const startX = geo.centerX + Math.cos(angle) * geo.rx;
     const startY = geo.centerY + Math.sin(angle) * geo.ry;
-    const dist = geo.containerWidth * (0.12 + (i % 5) * 0.02);
+    const dist = 24 + (i % 6) * 12;
     const tx = Math.cos(angle) * dist;
     const ty = Math.sin(angle) * dist;
-    const size = 2 + (i % 7);
-    const rotate = ((i % 3) - 1) * 10;
-    const delay = 320 + (i % 6) * 35;
+    const size = FRAGMENT_SIZES[i % FRAGMENT_SIZES.length];
+    const rotate = ((i % 7) - 3) * 11;
+    const delay = 250 + (i % 6) * 30;
     const color = FRAGMENT_COLORS[i % FRAGMENT_COLORS.length];
+    const front = i % 4 === 0;
     fragments.push({
       id: `frag-${i}`,
       startX,
@@ -573,6 +715,7 @@ function buildFragments(geo: Geometry): FragmentConfig[] {
       rotate,
       delay,
       color,
+      front,
     });
   }
   return fragments;
@@ -596,15 +739,18 @@ const styles = StyleSheet.create({
   dustVeil: {
     backgroundColor: '#FFFFFF',
   },
-  shadow: {
+  shadowBase: {
     position: 'absolute',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: SHADOW_COLOR,
     borderRadius: 999,
-    opacity: 0,
   },
   clip: {
     overflow: 'hidden',
     backgroundColor: 'transparent',
+  },
+  edgeHalo: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   edgeGlow: {
     position: 'absolute',
@@ -612,6 +758,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     top: 0,
     left: 0,
+  },
+  edgeHighlight: {
+    position: 'absolute',
+    borderColor: 'rgba(255,255,255,0.55)',
+    borderWidth: 1,
   },
   fragment: {
     position: 'absolute',
@@ -621,7 +772,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    top: '70%',
+    top: '72%',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
@@ -664,7 +815,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    top: '70%',
+    top: '72%',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 20,
