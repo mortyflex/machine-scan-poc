@@ -92,7 +92,15 @@ components independent from Expo Router:
   animates a real detoured object with an elliptical shadow; it only
   activates when a real cutout is provided. `effectLevel: 'photo-card' |
   'real-cutout'` (default inferred from `cutoutUri`). Independent from
-  Expo Router.
+  Expo Router. Kept exported; the main scan flow now uses
+  `ScanValidationStage`.
+- `ScanValidationStage` (Phase 6.4): CapWords-like validation step shown
+  after recognition success and before the full fiche. Light bg, soft
+  yellow glow, full photo in a stable-ratio card (no squeeze, no fake
+  cutout) or real `cutoutUri`, premium label, and confirm/retake/reject
+  actions. Future-ready for real segmentation.
+- `ScanValidationActions` (Phase 6.4): `Refaire` / `Valider` / `Rejeter`
+  action row used by the validation stage.
 
 The `scan-result` route (`src/app/scan-result.tsx`) owns the runtime
 state machine (missing / loading / success / error) and wires
@@ -234,12 +242,15 @@ AI_PROVIDER=mock | gemini | openai
 ## Recognition Flow
 
 ```txt
-Camera capture
+Camera capture (full-screen preview, scan frame)
   -> imageUri
   -> scan-result screen
   -> recognizeMachine(imageUri)
-  -> validate response
-  -> display result
+  -> validate response (Zod)
+  -> loading stage (photo card + "Analyse…")
+  -> validation stage (ScanValidationStage: object/photo-card + label)
+  -> user confirms
+  -> details stage (MachineResultCard + save)
   -> allow save
 ```
 

@@ -148,6 +148,88 @@ success.
 - Real segmentation, real cutout generation, true silhouette shadow,
   background blur, Skia layers (V3).
 
+## Phase 6.4 — CapWords flow alignment
+
+QA decision:
+
+- camera preview must be full-screen (no black side bars)
+- scan result must include a validation stage before details
+- without cutoutUri, never fake object segmentation and never squeeze the
+  photo
+- validation stage matches CapWords-style centered object/card, glow,
+  label, and confirm/retake/reject actions
+- details and save appear only after validation
+
+### Camera screen (`CameraCapture`)
+
+- Full-screen camera preview (`CameraView` with `StyleSheet.absoluteFillObject`),
+  no horizontal padding / no black side bars.
+- Subtle dark scrim for overlay readability; controls are overlay only and
+  do not compress the preview.
+- Scan frame: 4 white corner brackets around a centered placement area,
+  with the instruction `Place la machine dans le cadre`.
+- Bottom: a premium circular capture button (white ring + inner white
+  disc), with `Annuler` (top-left) to go home. Safe-area aware
+  (`useSafeAreaInsets`).
+- Permission / denied / mount-error states preserved.
+
+### Scan-result flow (`src/app/scan-result.tsx`)
+
+Three visual states (+ error):
+
+```txt
+A. loading  -> photo card (contain, no squeeze) + "Analyse de la machine…"
+B. validation -> ScanValidationStage (CapWords-like)
+C. details  -> MachineResultCard + save (only after validation)
+```
+
+A local `isValidated` state gates the details: the full fiche and save
+button are not shown until the user confirms the recognition.
+
+### Validation stage (`ScanValidationStage`)
+
+Props:
+
+```ts
+type ScanValidationStageProps = {
+  imageUri: string;
+  cutoutUri?: string;
+  machineName: string;
+  machineSubtitle?: string;
+  needsConfirmation?: boolean;
+  onConfirm: () => void;
+  onRetake: () => void;
+  onReject?: () => void;
+};
+```
+
+- Light background `#F8F8F5`.
+- Soft yellow glow behind the object/card (two stacked rounded Views).
+- Without `cutoutUri`: the full photo is shown in a stable-ratio card
+  (`aspectRatio: 4/3`, `contentFit: 'contain'`) — no squeeze, no fake
+  cutout. With `cutoutUri`: the real detoured object is shown.
+- Premium label under the object: machine name (`#111`, fontWeight `900`,
+  ~30, light textShadow) + subtitle + small "À confirmer" pill.
+- Actions (`ScanValidationActions`): `Refaire` (left), `Valider` (center,
+  primary), `Rejeter` (right). Discrete hint below: `Pas ce que vous
+  attendiez ? Reprendre la photo`.
+- Entrance: `ZoomIn` on the object/card.
+
+### Image rendering rules
+
+- Always `contentFit: 'contain'` inside a stable-ratio container.
+- Never force a conflicting width/height that squeezes the photo.
+- Never crop a central vignette pretending to be a cutout.
+- With a real `cutoutUri`, show the transparent object with glow + shadow.
+
+### Timeline
+
+- Loading state shows immediately; on recognition success the validation
+  stage appears (entrance ~480ms). No artificial delay on recognition.
+- After the user presses `Valider`, the details fiche slides in
+  (`FadeInUp`).
+
+
 
 
 

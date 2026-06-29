@@ -9,14 +9,21 @@
 - User can navigate to saved machines.
 - UI is readable on mobile.
 
-### Camera
+### Camera (Phase 6.4 — CapWords alignment)
 
 - Permission request appears.
 - Denied permission state is understandable.
-- Camera preview appears after permission.
-- Capture button takes a photo.
-- Captured image URI is passed to scan result.
-- Capture error state is understandable.
+- Camera preview is **full-screen** (no black side bars, no horizontal
+  padding compressing the preview).
+- A scan frame with 4 white corner brackets is visible, with the
+  instruction `Place la machine dans le cadre`.
+- The circular capture button is at the bottom; `Annuler` (top-left) goes
+  home.
+- Capture button takes a photo; capture in progress shows a spinner and
+  disables the button.
+- Captured image URI is passed to scan-result.
+- Capture / mount error state is understandable.
+- Controls are overlay only and do not compress the camera preview.
 
 Phase 2 detail:
 
@@ -63,27 +70,25 @@ Phase 3 detail (automated, no framework — run via Node test runner):
 
 Manual: app should remain openable; no UI wiring in this phase.
 
-### Scan Result (Phase 4)
+### Scan Result (Phase 6.4 — validation flow)
 
-- Captured photo is visible at the top when `imageUri` is present.
-- Loading state shows "Analyse de la machine…" with a spinner.
-- On success: machine name, type, confidence, description, alternative
-  names, primary/secondary muscles, and possible exercises are visible.
-- Each exercise shows name, difficulty badge, setup, execution, common
-  mistakes, and safety notes.
-- Low-confidence (`needsConfirmation` or `confidence < 0.60`) shows an
-  "À confirmer" badge and the uncertainty reason when present.
-- Error state shows a readable message per `error.kind`
-  (`missing_image | invalid_response | provider_error`) — no technical
-  stack is exposed.
-- Error state offers a "Réessayer" action that re-runs recognition.
-- "Reprendre une photo" navigates back to `/camera` (replace).
-- "Sauvegarder cette machine" is active on success. Saving shows a
-  "Sauvegarde…" state, then a "Machine sauvegardée" success card with a
-  "Voir mes machines" CTA. Double-save is prevented while saving.
-- "Accueil" navigates to `/` (replace).
-- "Image manquante" state appears when navigated to without `imageUri`,
-  with "Ouvrir la caméra" and "Accueil" CTAs.
+- Loading state: a clean photo card (contain, no squeeze) +
+  "Analyse de la machine…" spinner.
+- On success, a **validation stage** appears first (not the full fiche):
+  light bg, soft yellow glow, full photo in a stable-ratio card (no fake
+  cutout, no squeeze), premium label (machine name + type + "À confirmer"
+  pill if `needsConfirmation`), and actions `Refaire` / `Valider` /
+  `Rejeter` + hint.
+- The full fiche (name, confidence, description, muscles, exercises with
+  setup/execution/mistakes/safety) and the save button are shown **only
+  after the user presses `Valider`**.
+- `Refaire` → `/camera`; `Rejeter` → `/`.
+- Error state: readable message per `error.kind`
+  (`missing_image | invalid_response | provider_error`), with "Réessayer",
+  "Reprendre une photo", and "Accueil".
+- Missing image state: "Image manquante" with CTAs.
+- Save flow (idle/saving/saved/error) and SQLite persistence remain
+  functional after validation.
 
 ### Saved Machines (Phase 5)
 

@@ -381,6 +381,47 @@ Notes:
 - Manual visual validation required on a physical device before the human
   owner accepts the phase.
 
+## Phase 6.4 — CapWords flow alignment
+
+Status: DONE
+
+QA decision:
+
+- camera preview must be full-screen
+- scan result must include a validation stage before details
+- without cutoutUri, never fake object segmentation
+- validation stage matches CapWords-style centered object/card, label,
+  confirm/retake actions
+- details and save appear after validation
+
+Notes:
+
+- `CameraCapture` rewritten: full-screen `CameraView`
+  (`StyleSheet.absoluteFillObject`, no horizontal padding), subtle scrim,
+  overlay-only controls (no preview compression), 4 white corner brackets
+  scan frame, instruction `Place la machine dans le cadre`, premium
+  circular capture button, `Annuler` top-left, safe-area aware
+  (`useSafeAreaInsets`). Permission / denied / mount-error states
+  preserved.
+- New `ScanValidationStage` (`src/features/machine-scan/components/`):
+  light bg `#F8F8F5`, soft yellow glow, full photo in a stable-ratio card
+  (`aspectRatio 4/3`, `contentFit: contain` — no squeeze, no fake cutout)
+  or real `cutoutUri` object, premium label (machine name `#111` / 900 +
+  subtitle + small "À confirmer" pill), entrance `ZoomIn`.
+- New `ScanValidationActions`: `Refaire` / `Valider` (primary) / `Rejeter`
+  + discrete hint.
+- `scan-result.tsx` reworked into three states: loading (photo card +
+  "Analyse de la machine…"), validation (`ScanValidationStage`), details
+  (`MachineResultCard` + save). A local `isValidated` state gates the
+  details — the full fiche and save are not shown until the user confirms.
+- `Refaire` → `/camera`, `Rejeter` → `/`. Error/missing/loading states
+  preserved. Save/saved/SQLite/saved-machines/machine-detail/tests all
+  preserved.
+- The complex `MachineRevealEffect` is kept (still exported) but the main
+  flow now uses the simpler, honest validation stage.
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
+
 ## Phase 7 — Real AI Provider
 
 Status: TODO

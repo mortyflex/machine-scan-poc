@@ -5,7 +5,15 @@ import {
   useCameraPermissions,
   type CameraCapturedPicture,
 } from 'expo-camera';
-import { StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
 
@@ -16,10 +24,15 @@ type CaptureState =
 
 export function CameraCapture() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraReady, setCameraReady] = useState(false);
   const [capture, setCapture] = useState<CaptureState>({ status: 'idle' });
   const cameraRef = useRef<CameraView>(null);
+
+  const frameWidth = Math.min(width * 0.82, 360);
+  const frameHeight = frameWidth * 0.64;
 
   useEffect(() => {
     if (permission === null) {
@@ -73,7 +86,7 @@ export function CameraCapture() {
           <AppText variant="body" color="textSecondary" align="center">
             {denied
               ? "L'accès à la caméra a été refusé. Active-la dans les réglages de l'app."
-              : 'L\'app a besoin de la caméra pour scanner une machine.'}
+              : "L'app a besoin de la caméra pour scanner une machine."}
           </AppText>
           <PrimaryButton
             label="Redemander la permission"
@@ -84,11 +97,13 @@ export function CameraCapture() {
     );
   }
 
+  const capturing = capture.status === 'capturing';
+
   return (
-    <Screen safe={false} style={styles.screen}>
+    <View style={styles.screen}>
       <CameraView
         ref={cameraRef}
-        style={styles.preview}
+        style={StyleSheet.absoluteFillObject}
         facing="back"
         onCameraReady={() => setCameraReady(true)}
         onMountError={(event) =>
@@ -99,11 +114,35 @@ export function CameraCapture() {
         }
       />
 
-      <View style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.overlayTop} />
+      <View style={styles.scrim} pointerEvents="none" />
 
-        <View style={styles.overlayBottom}>
-          {capture.status === 'error' && (
+      <View style={styles.overlay} pointerEvents="box-none">
+        <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+          <Pressable
+            style={styles.topButton}
+            onPress={() => router.replace('/')}
+            hitSlop={12}
+          >
+            <Text style={styles.topButtonText}>Annuler</Text>
+          </Pressable>
+          <Text style={styles.topTitle}>Scanner une machine</Text>
+          <View style={styles.topButtonPlaceholder} />
+        </View>
+
+        <View style={styles.frameArea} pointerEvents="none">
+          <View style={[styles.frame, { width: frameWidth, height: frameHeight }]}>
+            <View style={[styles.corner, styles.cornerTL]} />
+            <View style={[styles.corner, styles.cornerTR]} />
+            <View style={[styles.corner, styles.cornerBL]} />
+            <View style={[styles.corner, styles.cornerBR]} />
+          </View>
+          <Text style={styles.instruction}>
+            Place la machine dans le cadre
+          </Text>
+        </View>
+
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 18 }]}>
+          {capture.status === 'error' ? (
             <Card style={styles.errorCard}>
               <AppText variant="subtitle" color="danger">
                 Capture impossible
@@ -112,27 +151,48 @@ export function CameraCapture() {
                 {capture.message}
               </AppText>
             </Card>
-          )}
+          ) : null}
 
-          <PrimaryButton
-            label={
-              capture.status === 'capturing'
-                ? 'Capture…'
-                : cameraReady
-                  ? 'Capturer'
-                  : 'Initialisation…'
-            }
-            onPress={handleCapture}
-            disabled={capture.status === 'capturing' || !cameraReady}
-          />
+          <View style={styles.captureRow}>
+            <View style={styles.sidePlaceholder} />
+            <Pressable
+              style={[
+                styles.captureButton,
+                (!cameraReady || capturing) && styles.captureButtonDisabled,
+              ]}
+              onPress={handleCapture}
+              disabled={!cameraReady || capturing}
+            >
+              {capturing ? (
+                <ActivityIndicator color="#111418" />
+              ) : (
+                <View style={styles.captureInner} />
+              )}
+            </Pressable>
+            <View style={styles.sidePlaceholder} />
+          </View>
+
+          <Text style={styles.captureHint}>
+            {capturing
+              ? 'Capture…'
+              : cameraReady
+                ? 'Appuie pour capturer'
+                : 'Initialisation de la caméra…'}
+          </Text>
         </View>
       </View>
-    </Screen>
+    </View>
   );
 }
 
+const CORNER = 28;
+const CORNER_WIDTH = 4;
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#000' },
+  screen: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -140,16 +200,133 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   deniedCard: { alignItems: 'center', gap: 12, width: '100%' },
-  preview: { flex: 1 },
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+  },
   overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
   },
-  overlayTop: { flex: 1 },
-  overlayBottom: { paddingHorizontal: 24, paddingBottom: 40, gap: 12 },
-  errorCard: { gap: 6 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  topButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  topButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  topButtonPlaceholder: {
+    width: 64,
+  },
+  topTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  frameArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 18,
+  },
+  frame: {
+    position: 'relative',
+  },
+  corner: {
+    position: 'absolute',
+    width: CORNER,
+    height: CORNER,
+    borderColor: '#FFFFFF',
+  },
+  cornerTL: {
+    top: -CORNER_WIDTH / 2,
+    left: -CORNER_WIDTH / 2,
+    borderTopWidth: CORNER_WIDTH,
+    borderLeftWidth: CORNER_WIDTH,
+    borderTopLeftRadius: 8,
+  },
+  cornerTR: {
+    top: -CORNER_WIDTH / 2,
+    right: -CORNER_WIDTH / 2,
+    borderTopWidth: CORNER_WIDTH,
+    borderRightWidth: CORNER_WIDTH,
+    borderTopRightRadius: 8,
+  },
+  cornerBL: {
+    bottom: -CORNER_WIDTH / 2,
+    left: -CORNER_WIDTH / 2,
+    borderBottomWidth: CORNER_WIDTH,
+    borderLeftWidth: CORNER_WIDTH,
+    borderBottomLeftRadius: 8,
+  },
+  cornerBR: {
+    bottom: -CORNER_WIDTH / 2,
+    right: -CORNER_WIDTH / 2,
+    borderBottomWidth: CORNER_WIDTH,
+    borderRightWidth: CORNER_WIDTH,
+    borderBottomRightRadius: 8,
+  },
+  instruction: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  bottomBar: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  errorCard: {
+    gap: 6,
+    width: '88%',
+  },
+  captureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 32,
+  },
+  sidePlaceholder: {
+    width: 40,
+  },
+  captureButton: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureButtonDisabled: {
+    opacity: 0.6,
+  },
+  captureInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#FFFFFF',
+  },
+  captureHint: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '500',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
 });

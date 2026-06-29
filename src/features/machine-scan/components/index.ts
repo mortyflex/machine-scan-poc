@@ -12,3 +12,11 @@ export {
 } from './RecognitionConfidence';
 export { SavedMachineCard, type SavedMachineCardProps } from './SavedMachineCard';
 export { SavedMachinesEmptyState } from './SavedMachinesEmptyState';
+export {
+  ScanValidationActions,
+  type ScanValidationActionsProps,
+} from './ScanValidationActions';
+export {
+  ScanValidationStage,
+  type ScanValidationStageProps,
+} from './ScanValidationStage';
