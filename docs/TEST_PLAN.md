@@ -51,14 +51,15 @@ Phase 3 detail (automated, no framework — run via Node test runner):
 - `machineRecognitionSchema` rejects invalid `difficulty` (e.g. `'expert'`).
 - `machineRecognitionSchema` rejects `confidence` outside `0..1`.
 - `machineRecognitionSchema` rejects empty `possibleExercises`.
-- `recognizeMachine('')` throws `RecognitionError` with kind `missing_image`.
-- `recognizeMachine('mock://...')` returns a valid typed result.
+- `recognizeMachine('')` returns `{ ok: false }` with kind `missing_image`.
+- `recognizeMachine('mock://...')` returns `{ ok: true }` with a valid typed result.
 - `recognizeMachine` forces `needsConfirmation = true` when `confidence < 0.60`.
 - `recognizeMachine` rejects an invalid provider response with kind
   `invalid_response`.
-- `recognizeMachine` wraps a throwing provider as `provider_error`.
+- `recognizeMachine` returns kind `provider_error` when the provider throws.
 - `mockProvider` refuses an empty `imageUri`.
-- `isRecognitionError` narrows the error type.
+- The public API never throws for these expected states; callers branch on
+  `result.ok`.
 
 Manual: app should remain openable; no UI wiring in this phase.
 

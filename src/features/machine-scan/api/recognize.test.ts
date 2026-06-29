@@ -2,11 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-  isRecognitionError,
   machineRecognitionSchema,
   mockProvider,
   recognizeMachine,
-  RecognitionError,
 } from './recognize';
 import type { RecognitionProvider } from './mock-provider';
 
@@ -36,23 +34,23 @@ test('machineRecognitionSchema rejects empty possibleExercises', () => {
   assert.equal(parsed.success, false);
 });
 
-test('recognizeMachine throws missing_image when imageUri is empty', async () => {
-  await assert.rejects(
-    () => recognizeMachine(''),
-    (error: unknown) => {
-      assert.ok(error instanceof RecognitionError);
-      assert.equal(error.kind, 'missing_image');
-      return true;
-    },
-  );
+test('recognizeMachine returns missing_image when imageUri is empty', async () => {
+  const result = await recognizeMachine('');
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.error.kind, 'missing_image');
+  }
 });
 
 test('recognizeMachine returns a valid result for a non-empty imageUri', async () => {
   const result = await recognizeMachine('mock://image.jpg');
-  assert.equal(result.machineName, 'Presse à cuisses inclinée');
-  assert.equal(result.machineType, 'lower_body_machine');
-  assert.ok(result.confidence > 0 && result.confidence <= 1);
-  assert.ok(result.possibleExercises.length >= 1);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.data.machineName, 'Presse à cuisses inclinée');
+    assert.equal(result.data.machineType, 'lower_body_machine');
+    assert.ok(result.data.confidence > 0 && result.data.confidence <= 1);
+    assert.ok(result.data.possibleExercises.length >= 1);
+  }
 });
 
 test('recognizeMachine forces needsConfirmation when confidence < 0.6', async () => {
@@ -69,50 +67,45 @@ test('recognizeMachine forces needsConfirmation when confidence < 0.6', async ()
   const result = await recognizeMachine('mock://image.jpg', {
     provider: lowConfProvider,
   });
-  assert.equal(result.needsConfirmation, true);
-  assert.ok(result.uncertaintyReason !== null);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.data.needsConfirmation, true);
+    assert.ok(result.data.uncertaintyReason !== null);
+  }
 });
 
-test('recognizeMachine rejects an invalid mock provider response', async () => {
+test('recognizeMachine returns invalid_response for an invalid provider response', async () => {
   const badProvider: RecognitionProvider = {
     async recognize() {
       return Promise.resolve({ machineName: 123 });
     },
   };
-  await assert.rejects(
-    () => recognizeMachine('mock://image.jpg', { provider: badProvider }),
-    (error: unknown) => {
-      assert.ok(error instanceof RecognitionError);
-      assert.equal(error.kind, 'invalid_response');
-      return true;
-    },
-  );
+  const result = await recognizeMachine('mock://image.jpg', {
+    provider: badProvider,
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.error.kind, 'invalid_response');
+  }
 });
 
-test('recognizeMachine wraps provider errors as provider_error', async () => {
+test('recognizeMachine returns provider_error when the provider throws', async () => {
   const failingProvider: RecognitionProvider = {
     async recognize() {
       throw new Error('network down');
     },
   };
-  await assert.rejects(
-    () => recognizeMachine('mock://image.jpg', { provider: failingProvider }),
-    (error: unknown) => {
-      assert.ok(error instanceof RecognitionError);
-      assert.equal(error.kind, 'provider_error');
-      return true;
-    },
-  );
+  const result = await recognizeMachine('mock://image.jpg', {
+    provider: failingProvider,
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.error.kind, 'provider_error');
+  }
 });
 
 test('mockProvider refuses empty imageUri', async () => {
   await assert.rejects(() => mockProvider.recognize(''));
-});
-
-test('isRecognitionError narrows the type', () => {
-  const err = new RecognitionError('missing_image', 'x');
-  assert.equal(isRecognitionError(err), true);
-  assert.equal(isRecognitionError(new Error('x')), false);
 });
 
 function mockExercise() {

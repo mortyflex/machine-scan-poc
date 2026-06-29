@@ -119,13 +119,16 @@ Notes:
   returns a leg press result, simulates ~600ms latency, refuses empty
   `imageUri`, independent from UI.
 - Public API `recognizeMachine(imageUri)` in
-  `src/features/machine-scan/api/recognize.ts`: validates via Zod, forces
-  `needsConfirmation` when `confidence < 0.60`, throws typed
-  `RecognitionError` (`missing_image | invalid_response | provider_error`).
+  `src/features/machine-scan/api/recognize.ts`: validates via Zod (safeParse),
+  forces `needsConfirmation` when `confidence < 0.60`, returns a typed
+  `RecognitionResult` discriminated union (`ok | error`) with error kinds
+  `missing_image | invalid_response | provider_error`. The public API never
+  throws for these expected states; a provider may throw internally and the
+  API converts that into `{ ok: false, error: { kind: 'provider_error' } }`.
 - Tests in `src/features/machine-scan/api/recognize.test.ts` (no framework,
-  run via Node built-in test runner + TypeScript build): 11 cases covering
+  run via Node built-in test runner through `tsx`): 10 cases covering
   schema accept/reject, missing image, valid result, low confidence forcing,
-  invalid response, provider error, mock refusal, type narrowing.
+  invalid response, provider error, mock refusal.
 - `scan-result` screen intentionally NOT wired to the provider in this phase
   (planned for Phase 4).
 

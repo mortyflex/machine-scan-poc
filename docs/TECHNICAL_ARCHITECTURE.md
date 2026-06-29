@@ -129,11 +129,15 @@ Implementation (Phase 3):
 - Schema: `src/features/machine-scan/api/schema.ts`
   (`machineRecognitionSchema`, strict Zod).
 - Errors: `src/features/machine-scan/api/errors.ts`
-  (`RecognitionError` with kinds `missing_image | invalid_response | provider_error`).
+  (`RecognitionResult` discriminated union with error kinds
+  `missing_image | invalid_response | provider_error`). The public
+  recognition API returns this typed result instead of throwing for
+  expected business errors.
 - Provider interface: `RecognitionProvider` in
   `src/features/machine-scan/api/mock-provider.ts`.
 - Public API: `recognizeMachine(imageUri, options?)` in
-  `src/features/machine-scan/api/recognize.ts`.
+  `src/features/machine-scan/api/recognize.ts`. Returns
+  `Promise<RecognitionResult>`; never throws for expected states.
 - Provider selection is injectable through `options.provider`
   (defaults to `mockProvider`), keeping providers replaceable.
 

@@ -47,35 +47,23 @@ Handle:
 
 For the public recognition API, prefer a discriminated union result instead of throwing custom Error classes.
 
-Use:
+Expected recognition errors should be represented as data, not thrown exceptions.
 
 ```ts
-
 type RecognitionResult =
-
   | {
-
       ok: true;
-
       data: MachineRecognitionResult;
-
     }
-
   | {
-
       ok: false;
-
       error: {
-
         kind: 'missing_image' | 'invalid_response' | 'provider_error';
-
         message: string;
-
         cause?: unknown;
-
       };
-
     };
+```
 
 ## Files Usually Involved
 

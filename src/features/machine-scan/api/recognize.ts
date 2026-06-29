@@ -1,6 +1,6 @@
 import type { MachineRecognitionResult } from '@/features/machine-scan/types';
 
-import { RecognitionError } from './errors';
+import type { RecognitionResult } from './errors';
 import { mockProvider, type RecognitionProvider } from './mock-provider';
 import { machineRecognitionSchema } from './schema';
 
@@ -13,12 +13,15 @@ export type RecognizeOptions = {
 export async function recognizeMachine(
   imageUri: string,
   options?: RecognizeOptions,
-): Promise<MachineRecognitionResult> {
+): Promise<RecognitionResult> {
   if (!imageUri || imageUri.trim().length === 0) {
-    throw new RecognitionError(
-      'missing_image',
-      'Aucune image fournie pour la reconnaissance.',
-    );
+    return {
+      ok: false,
+      error: {
+        kind: 'missing_image',
+        message: 'Aucune image fournie pour la reconnaissance.',
+      },
+    };
   }
 
   const provider: RecognitionProvider = options?.provider ?? mockProvider;
@@ -26,20 +29,26 @@ export async function recognizeMachine(
   try {
     raw = await provider.recognize(imageUri);
   } catch (error) {
-    throw new RecognitionError(
-      'provider_error',
-      'Le service de reconnaissance a échoué.',
-      { cause: error },
-    );
+    return {
+      ok: false,
+      error: {
+        kind: 'provider_error',
+        message: 'Le service de reconnaissance a échoué.',
+        cause: error,
+      },
+    };
   }
 
   const parsed = machineRecognitionSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new RecognitionError(
-      'invalid_response',
-      'La réponse de reconnaissance est invalide.',
-      { cause: parsed.error },
-    );
+    return {
+      ok: false,
+      error: {
+        kind: 'invalid_response',
+        message: 'La réponse de reconnaissance est invalide.',
+        cause: parsed.error,
+      },
+    };
   }
 
   const result: MachineRecognitionResult = parsed.data;
@@ -53,13 +62,9 @@ export async function recognizeMachine(
       'Confiance trop basse pour valider la reconnaissance.';
   }
 
-  return result;
+  return { ok: true, data: result };
 }
 
-export {
-  RecognitionError,
-  isRecognitionError,
-  type RecognitionErrorKind,
-} from './errors';
+export { type RecognitionErrorKind, type RecognitionResult } from './errors';
 export { machineRecognitionSchema } from './schema';
 export { mockProvider, type RecognitionProvider } from './mock-provider';

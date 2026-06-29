@@ -134,9 +134,12 @@ Error kinds exposed by the app:
 - `invalid_response`: Zod validation failed.
 - `provider_error`: the provider threw or timed out.
 
-These are represented by `RecognitionError` in
-`src/features/machine-scan/api/errors.ts` and are the only expected
-business errors for the recognition step.
+These are returned by `recognizeMachine` as a typed
+`RecognitionResult` discriminated union in
+`src/features/machine-scan/api/errors.ts`. The public recognition API
+never throws for these expected business errors; callers branch on
+`result.ok`. A provider may still throw internally, but the public API
+converts that into `{ ok: false, error: { kind: 'provider_error', ... } }`.
 
 ## Prompt
 

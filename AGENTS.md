@@ -375,7 +375,7 @@ Prefer typed result objects for expected business errors.
 
 For feature APIs used by UI components, prefer this shape:
 
-````ts
+```ts
 type FeatureResult<TData, TErrorKind extends string> =
   | {
       ok: true;
@@ -389,6 +389,27 @@ type FeatureResult<TData, TErrorKind extends string> =
         cause?: unknown;
       };
     };
+```
+
+Use this approach for expected states such as:
+
+- missing input
+- invalid AI response
+- low confidence
+- provider failure
+- network failure
+- storage failure
+
+Avoid custom `Error` classes for expected UI states unless there is a strong reason.
+
+Throwing errors is acceptable for:
+
+- programmer errors
+- impossible states
+- unrecoverable failures
+- boundary code where the caller explicitly expects exceptions
+
+UI-facing APIs should not require `try/catch` for normal business states.
 
 ## UI Rules
 
