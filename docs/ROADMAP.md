@@ -174,7 +174,7 @@ Notes:
 
 ## Phase 5 — Local Persistence
 
-Status: TODO
+Status: DONE
 
 Goals:
 
@@ -189,6 +189,34 @@ Done when:
 - Saved machine appears in list.
 - User can open machine detail.
 - Data persists after restart.
+
+Notes:
+
+- Repository in `src/features/machine-scan/storage/` built on
+  `expo-sqlite` (`openDatabaseAsync`). Schema: `machine_scans` table with
+  JSON `TEXT` columns for arrays and `INTEGER` for `needsConfirmation`.
+- All public storage functions return a typed `StorageResult<TData>`
+  (`ok | error`) and never throw for expected business errors
+  (`database_error | not_found | invalid_input`), following the project
+  Error Handling Rules.
+- `initMachineScanDatabase()` is called once at app startup in
+  `_layout.tsx` (with a loading/error screen guard).
+- Image persistence: the captured photo is copied into
+  `Paths.document/machine-scans/` via `expo-file-system` so images survive
+  app restarts (falls back to the original URI if copying fails).
+- `scan-result.tsx` save button is now active on success, with
+  idle / saving / saved / error states. On save success, a "Voir mes
+  machines" CTA replaces the button.
+- `saved-machines.tsx` handles loading / empty / error / success and
+  refreshes on focus (`useFocusEffect`). Each item is a `SavedMachineCard`
+  leading to the detail screen.
+- `machine/[id].tsx` handles loading / not_found / error / success and
+  reuses `MachineResultCard`. Includes a "Supprimer cette machine" action
+  (with deleting/error states) and a "Retour à la liste" CTA.
+- Unit tests for pure storage mapping run in Node via `tsx`:
+  `src/features/machine-scan/storage/mapping.test.ts`.
+- Manual visual validation required on a physical device before the human
+  owner accepts the phase.
 
 ## Phase 6 — Reveal Effect V1
 

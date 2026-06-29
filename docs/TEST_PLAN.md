@@ -78,19 +78,42 @@ Manual: app should remain openable; no UI wiring in this phase.
   stack is exposed.
 - Error state offers a "Réessayer" action that re-runs recognition.
 - "Reprendre une photo" navigates back to `/camera` (replace).
-- "Sauvegarder cette machine" is disabled with a "Disponible en Phase 5"
-  note.
+- "Sauvegarder cette machine" is active on success. Saving shows a
+  "Sauvegarde…" state, then a "Machine sauvegardée" success card with a
+  "Voir mes machines" CTA. Double-save is prevented while saving.
 - "Accueil" navigates to `/` (replace).
 - "Image manquante" state appears when navigated to without `imageUri`,
   with "Ouvrir la caméra" and "Accueil" CTAs.
 
-### Saved Machines
+### Saved Machines (Phase 5)
 
-- Empty state appears when no machine is saved.
-- Saved machines appear after save.
-- Machine detail opens from list.
-- Saved data persists after app restart.
-- Not found state appears for invalid machine id.
+- Loading state appears while fetching.
+- Empty state appears when no machine is saved, with "Scanner une machine".
+- Error state appears if the database read fails.
+- Saved machines appear after save, ordered by `createdAt DESC`.
+- Each item (`SavedMachineCard`) shows name, thumbnail, primary muscles,
+  confidence, and save date; tapping opens the detail screen.
+- List refreshes on focus (after returning from detail or scan-result).
+
+### Machine Detail (Phase 5)
+
+- Loading state appears while fetching.
+- Not found state appears for an invalid/missing machine id, with a
+  "Retour à la liste" CTA.
+- Error state appears if the database read fails.
+- On success: photo, `MachineResultCard` (name, confidence, description,
+  muscles, exercises with setup/execution/mistakes/safety), a
+  "Supprimer cette machine" action (with deleting/error states), and a
+  "Retour à la liste" CTA.
+- After delete, the screen navigates back to `/saved-machines` (replace).
+
+### Persistence (Phase 5)
+
+- After saving a machine and restarting the app, the machine still appears
+  in the saved list.
+- The saved photo remains visible after restart (copied to the app
+  document directory).
+- Deleting a machine removes it from the list after restart.
 
 ### Reveal Effect
 
@@ -116,6 +139,21 @@ Add when practical:
 - Recognition adapter tests.
 - Storage repository tests.
 - Basic component render tests.
+
+Phase 3 + 5 automated tests (Node test runner via `tsx`, no framework):
+
+- `src/features/machine-scan/api/recognize.test.ts`: schema accept/reject,
+  recognition result `ok | error` kinds, low-confidence forcing, mock
+  refusal.
+- `src/features/machine-scan/storage/mapping.test.ts`: row → `MachineScan`
+  parsing, `needsConfirmation` integer → boolean, resilient JSON handling,
+  `toMachineScanInput`, `toRecognitionResult`, unique `generateId`.
+
+Run with:
+
+```bash
+npx tsx --test src/features/machine-scan/api/recognize.test.ts src/features/machine-scan/storage/mapping.test.ts
+```
 
 ## Required Checks Before Commit
 

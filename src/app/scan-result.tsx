@@ -6,6 +6,10 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { recognizeMachine } from '@/features/machine-scan/api';
 import type { RecognitionErrorKind } from '@/features/machine-scan/api';
 import { MachineResultCard } from '@/features/machine-scan/components';
+import {
+  saveMachineScan,
+  toMachineScanInput,
+} from '@/features/machine-scan/storage';
 import type { MachineRecognitionResult } from '@/features/machine-scan/types';
 import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
 import { spacing, useAppTheme } from '@/shared/theme';
@@ -15,6 +19,12 @@ type ScanState =
   | { status: 'loading' }
   | { status: 'success'; data: MachineRecognitionResult }
   | { status: 'error'; kind: RecognitionErrorKind };
+
+type SaveState =
+  | { status: 'idle' }
+  | { status: 'saving' }
+  | { status: 'saved'; id: string }
+  | { status: 'error' };
 
 const ERROR_MESSAGES: Record<RecognitionErrorKind, string> = {
   missing_image:
@@ -86,12 +96,7 @@ export default function ScanResultScreen() {
         {scanState.status === 'success' ? (
           <View style={styles.successBlock}>
             <MachineResultCard result={scanState.data} />
-            <View style={styles.saveArea}>
-              <PrimaryButton label="Sauvegarder cette machine" disabled />
-              <AppText variant="caption" color="textMuted" align="center">
-                Disponible en Phase 5
-              </AppText>
-            </View>
+            <SaveBlock data={scanState.data} imageUri={imageUri} />
           </View>
         ) : null}
 
@@ -165,6 +170,61 @@ function MissingImageScreen() {
   );
 }
 
+function SaveBlock({
+  data,
+  imageUri,
+}: {
+  data: MachineRecognitionResult;
+  imageUri: string;
+}) {
+  const [state, setState] = useState<SaveState>({ status: 'idle' });
+
+  const handleSave = () => {
+    setState({ status: 'saving' });
+    saveMachineScan(toMachineScanInput(data, imageUri))
+      .then((result) => {
+        if (result.ok) {
+          setState({ status: 'saved', id: result.data.id });
+        } else {
+          setState({ status: 'error' });
+        }
+      })
+      .catch(() => setState({ status: 'error' }));
+  };
+
+  if (state.status === 'saved') {
+    return (
+      <Card style={styles.saveSuccessCard}>
+        <AppText variant="subtitle" color="success">
+          Machine sauvegardée
+        </AppText>
+        <Link href="/saved-machines" replace asChild>
+          <PrimaryButton label="Voir mes machines" />
+        </Link>
+      </Card>
+    );
+  }
+
+  return (
+    <View style={styles.saveArea}>
+      {state.status === 'error' ? (
+        <AppText variant="caption" color="danger" align="center">
+          Sauvegarde impossible. Réessaie.
+        </AppText>
+      ) : null}
+      <PrimaryButton
+        label={
+          state.status === 'saving'
+            ? 'Sauvegarde…'
+            : 'Sauvegarder cette machine'
+        }
+        onPress={handleSave}
+        disabled={state.status === 'saving'}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
@@ -188,6 +248,10 @@ const styles = StyleSheet.create({
   },
   saveArea: {
     gap: spacing.xs,
+  },
+  saveSuccessCard: {
+    gap: spacing.sm,
+    alignItems: 'stretch',
   },
   actions: {
     gap: spacing.sm,

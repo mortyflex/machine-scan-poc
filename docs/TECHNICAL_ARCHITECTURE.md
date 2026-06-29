@@ -94,6 +94,41 @@ covers impossible failures as `provider_error`.
 
 Use local SQLite for POC.
 
+Implementation (Phase 5) lives in `src/features/machine-scan/storage/`:
+
+- `db.ts`: opens a single `SQLiteDatabase` (`machine-scan.db`) via
+  `openDatabaseAsync` and exposes `initMachineScanDatabase()` returning a
+  `StorageResult<void>`. The schema creates the `machine_scans` table and a
+  `createdAt DESC` index. Initialized once at app startup in `_layout.tsx`.
+- `machine-scan-repository.ts`: CRUD repository. All public functions return
+  `StorageResult<TData>` and never throw for expected business errors:
+  - `saveMachineScan(input)` → `StorageResult<MachineScan>`
+  - `listSavedMachineScans()` → `StorageResult<MachineScan[]>`
+  - `getMachineScanById(id)` → `StorageResult<MachineScan>` (`not_found` if absent)
+  - `deleteMachineScan(id)` → `StorageResult<void>`
+- `mapping.ts`: pure serialization helpers (`mapRowToMachineScan`,
+  `toMachineScanInput`, `toRecognitionResult`, `generateId`). Resilient to
+  corrupted JSON (returns empty arrays instead of throwing). Unit-tested in
+  Node via `mapping.test.ts`.
+- `image-persistence.ts`: copies the captured photo into
+  `Paths.document/machine-scans/` so images survive app restarts. Falls back
+  to the original URI if copying fails.
+
+Storage result shape (follows the project Error Handling Rules):
+
+```ts
+type StorageResult<TData> =
+  | { ok: true; data: TData }
+  | {
+      ok: false;
+      error: {
+        kind: 'database_error' | 'not_found' | 'invalid_input';
+        message: string;
+        cause?: unknown;
+      };
+    };
+```
+
 Saved entity:
 
 ```ts
@@ -113,6 +148,10 @@ export type MachineScan = {
   createdAt: string;
 };
 ```
+
+Arrays (`primaryMuscles`, `secondaryMuscles`, `possibleExercises`,
+`alternativeNames`) are stored as JSON `TEXT` columns and parsed back on
+read. `needsConfirmation` is stored as `INTEGER` (0/1).
 
 Exercise entity:
 
