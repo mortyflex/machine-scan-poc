@@ -42,6 +42,7 @@ async function handleCutout(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
+  console.log('[cutout-server] POST /api/machine-cutout');
   const rawBody = await readBody(req);
   if (rawBody === null) {
     sendJson(res, 413, {

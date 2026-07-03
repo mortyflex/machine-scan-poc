@@ -1,10 +1,9 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import { z } from 'zod';
 
+import { isDevBuild, type MobileCutoutConfig } from './cutout-config';
 import type { CutoutError, CutoutErrorKind, CutoutResult } from './types';
 
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 const ENDPOINT = '/api/machine-cutout';
 const REQUEST_TIMEOUT_MS = 20_000;
 const CUTOUTS_DIRECTORY = 'machine-scan-cutouts';
@@ -27,6 +26,9 @@ function failure(
   message: string,
   cause?: unknown,
 ): CutoutResult {
+  if (isDevBuild) {
+    console.warn('[cutout] remote:error', { kind, message });
+  }
   const error: CutoutError = { kind, message };
   if (cause !== undefined) error.cause = cause;
   return { ok: false, error };
@@ -48,13 +50,13 @@ function guessMimeType(imageUri: string): string {
  */
 export async function requestRemoteCutout(
   imageUri: string,
+  config: MobileCutoutConfig,
 ): Promise<CutoutResult> {
-  if (!API_BASE_URL) {
-    return failure(
-      'cutout_unavailable',
-      'URL du backend de détourage non configurée.',
-    );
+  if (!config.apiBaseUrl) {
+    return failure('invalid_input', 'Missing EXPO_PUBLIC_API_BASE_URL');
   }
+
+  const url = `${config.apiBaseUrl}${ENDPOINT}`;
 
   let imageBase64: string;
   try {
@@ -67,12 +69,20 @@ export async function requestRemoteCutout(
     );
   }
 
+  if (isDevBuild) {
+    // Never log the base64 payload itself — only the target and the source.
+    console.info('[cutout] remote:request:start', {
+      url,
+      imageUriPrefix: imageUri.slice(0, 32),
+    });
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${ENDPOINT}`, {
+    response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -89,6 +99,13 @@ export async function requestRemoteCutout(
     );
   } finally {
     clearTimeout(timeout);
+  }
+
+  if (isDevBuild) {
+    console.info('[cutout] remote:response', {
+      status: response.status,
+      ok: response.ok,
+    });
   }
 
   if (!response.ok) {

@@ -336,6 +336,41 @@ Details / saved screens:
 - Saved list thumbnails and saved detail prefer `cutoutUri`, falling back
   to `imageUri`.
 
+## Phase 6.6.1 — Cutout mobile trigger debug and fallback display
+
+QA finding:
+
+- backend `/health` was reachable from iPhone
+- no `POST /api/machine-cutout` appeared during scan
+- issue is on mobile trigger/env/config side, not remove.bg
+- added dev-only cutout debug panel and logs
+- improved no-cutout fallback from narrow vertical photo to wide
+  cover-style photo card
+
+Fallback photo card (validation stage, no `cutoutUri`):
+
+- White card: width 86% of the canvas (max 380), height clamped
+  ~250–320px, borderRadius 30, soft shadow below.
+- The photo fills the whole card with a Skia `fit="cover"` crop (aspect
+  ratio preserved, centered, rounded-corner clip) — no more narrow
+  vertical photo strip inside a big white rectangle.
+- `cover` is allowed here only as an aesthetic fallback composition; it
+  is never presented as a real cutout. The discrete hint
+  `Détourage indisponible` stays, and the real-cutout mode (glow +
+  shadow + transparent object, no card) is unchanged.
+
+Dev-only debug panel (`CutoutDebugPanel`, gated behind `__DEV__`):
+
+```txt
+Cutout debug
+provider: <remote|disabled>
+api: <apiBaseUrl|empty>
+status: <idle|loading|success|failed|disabled>
+error: <kind|none>
+visual mode: <real-cutout|photo-fallback-cover>
+[Relancer le détourage]  (only when failed/disabled)
+```
+
 
 
 

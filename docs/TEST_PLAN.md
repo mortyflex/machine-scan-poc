@@ -177,6 +177,40 @@ Automated (`src/features/machine-scan/cutout/generate-cutout.test.ts`):
 - empty `imageUri` → `{ ok: false, kind: 'invalid_input' }`.
 - provider `disabled` → `{ ok: false, kind: 'cutout_disabled' }`.
 - unknown provider value → treated as disabled.
+- provider `remote` without `EXPO_PUBLIC_API_BASE_URL` →
+  `{ ok: false, kind: 'invalid_input' }` (Missing EXPO_PUBLIC_API_BASE_URL).
+
+### Cutout Debug (Phase 6.6.1, dev only)
+
+QA finding:
+
+- backend `/health` was reachable from iPhone
+- no `POST /api/machine-cutout` appeared during scan
+- issue is on mobile trigger/env/config side, not remove.bg
+- added dev-only cutout debug panel and logs
+- improved no-cutout fallback from narrow vertical photo to wide
+  cover-style photo card
+
+Manual (physical iPhone, Expo Go, dev build):
+
+- After a scan, the `Cutout debug` panel is visible on the cutout loading
+  and validation screens (dev only; never in production).
+- With `.env` loaded correctly, the panel shows `provider: remote` and
+  `api: http://<mac-lan-ip>:3000`; status goes `loading` →
+  `success`/`failed`.
+- If the panel shows `provider: disabled` / `api: empty`, Expo did not
+  load `.env` → restart with `npx expo start -c` and fully close/reopen
+  Expo Go.
+- On `failed`/`disabled`, the `Relancer le détourage` button re-runs the
+  cutout without retaking the photo.
+- Metro console shows `[cutout] generateMachineCutout:start` /
+  `remote:request:start` / `remote:response` (never the base64 payload).
+- Server terminal shows `[cutout-server] POST /api/machine-cutout` when
+  the request fires.
+- Fallback visual: without `cutoutUri`, the photo fills the white card
+  wide (cover crop, no narrow vertical strip), with the
+  `Détourage indisponible` hint; the panel shows
+  `visual mode: photo-fallback-cover`.
 
 Automated (`src/features/machine-scan/storage/mapping.test.ts` additions):
 

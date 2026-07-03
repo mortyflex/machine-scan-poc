@@ -1,3 +1,8 @@
+export {
+  CutoutDebugPanel,
+  type CutoutDebugPanelProps,
+  type CutoutDebugStatus,
+} from './CutoutDebugPanel';
 export { ExerciseList, type ExerciseListProps } from './ExerciseList';
 export { MachineResultCard, type MachineResultCardProps } from './MachineResultCard';
 export {

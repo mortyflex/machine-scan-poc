@@ -10,6 +10,8 @@ import {
   Oval,
   RadialGradient,
   RoundedRect,
+  rect,
+  rrect,
   useImage,
 } from '@shopify/react-native-skia';
 import Animated, { ZoomIn } from 'react-native-reanimated';
@@ -28,6 +30,7 @@ type StageSize = { width: number; height: number };
 const STAGE_BG = '#F8F8F5';
 const TITLE_COLOR = '#111111';
 const SUBTITLE_COLOR = '#6B6B6B';
+const CARD_RADIUS = 30;
 
 export function SkiaCutoutStage({
   imageUri,
@@ -134,18 +137,34 @@ export function SkiaCutoutStage({
                 y={layout.cardY}
                 width={layout.cardW}
                 height={layout.cardH}
-                r={18}
+                r={CARD_RADIUS}
                 color="#FFFFFF"
               />
+              {/* Honest photo preview, not a cutout: cover-style crop so the
+                  photo fills the whole card instead of a narrow contained
+                  strip. Aspect ratio is preserved by fit="cover". */}
               {photoImage ? (
-                <Image
-                  image={photoImage}
-                  x={layout.cardX + 8}
-                  y={layout.cardY + 8}
-                  width={layout.cardW - 16}
-                  height={layout.cardH - 16}
-                  fit="contain"
-                />
+                <Group
+                  clip={rrect(
+                    rect(
+                      layout.cardX,
+                      layout.cardY,
+                      layout.cardW,
+                      layout.cardH,
+                    ),
+                    CARD_RADIUS,
+                    CARD_RADIUS,
+                  )}
+                >
+                  <Image
+                    image={photoImage}
+                    x={layout.cardX}
+                    y={layout.cardY}
+                    width={layout.cardW}
+                    height={layout.cardH}
+                    fit="cover"
+                  />
+                </Group>
               ) : null}
             </Group>
           )}
@@ -243,9 +262,10 @@ function computeLayout(size: StageSize, useRealCutout: boolean): Layout {
   const shadowX = (w - shadowW) / 2;
   const shadowY = objY + objH - 6;
 
-  // Photo fallback card (stable ratio, no squeeze)
-  const cardW = Math.min(w * 0.84, 340);
-  const cardH = cardW * 0.74;
+  // Photo fallback card: wide preview that fills the card (cover crop),
+  // no narrow vertical strip inside a big white rectangle.
+  const cardW = Math.min(w * 0.86, 380);
+  const cardH = Math.min(Math.max(250, h * 0.5), 320, h * 0.75);
   const cardX = (w - cardW) / 2;
   const cardY = cy - cardH / 2;
 

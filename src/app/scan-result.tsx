@@ -6,11 +6,17 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { recognizeMachine } from '@/features/machine-scan/api';
 import type { RecognitionErrorKind } from '@/features/machine-scan/api';
-import { generateMachineCutout } from '@/features/machine-scan/cutout';
 import {
+  generateMachineCutout,
+  getCutoutConfig,
+} from '@/features/machine-scan/cutout';
+import type { CutoutErrorKind } from '@/features/machine-scan/cutout';
+import {
+  CutoutDebugPanel,
   MachineResultCard,
   ScanValidationStage,
 } from '@/features/machine-scan/components';
+import type { CutoutDebugStatus } from '@/features/machine-scan/components';
 import {
   saveMachineScan,
   toMachineScanInput,
@@ -38,7 +44,7 @@ type CutoutState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'ready'; cutoutUri: string }
-  | { status: 'unavailable' };
+  | { status: 'failed'; errorKind: CutoutErrorKind };
 
 const ERROR_MESSAGES: Record<RecognitionErrorKind, string> = {
   missing_image:
@@ -70,6 +76,8 @@ export default function ScanResultScreen() {
   });
   const [isValidated, setIsValidated] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [cutoutAttempt, setCutoutAttempt] = useState(0);
+  const cutoutConfig = getCutoutConfig();
 
   useEffect(() => {
     if (!imageUri) {
@@ -110,17 +118,17 @@ export default function ScanResultScreen() {
         if (result.ok) {
           setCutoutState({ status: 'ready', cutoutUri: result.data.cutoutUri });
         } else {
-          setCutoutState({ status: 'unavailable' });
+          setCutoutState({ status: 'failed', errorKind: result.error.kind });
         }
       })
       .catch(() => {
         if (cancelled) return;
-        setCutoutState({ status: 'unavailable' });
+        setCutoutState({ status: 'failed', errorKind: 'cutout_failed' });
       });
     return () => {
       cancelled = true;
     };
-  }, [scanState.status, imageUri, retryCount]);
+  }, [scanState.status, imageUri, retryCount, cutoutAttempt]);
 
   const handleRetry = () => {
     setIsValidated(false);
@@ -148,28 +156,52 @@ export default function ScanResultScreen() {
     return <LoadingStage imageUri={imageUri} label="Analyse de la machine…" />;
   }
 
+  const cutoutUri =
+    cutoutState.status === 'ready' ? cutoutState.cutoutUri : undefined;
+
+  // Dev-only diagnostic overlay (Phase 6.6.1): confirms on-device whether
+  // the env vars are read and whether the backend request actually fires.
+  const debugPanel = __DEV__ ? (
+    <CutoutDebugPanel
+      provider={cutoutConfig.provider}
+      apiBaseUrl={cutoutConfig.apiBaseUrl}
+      status={toCutoutDebugStatus(cutoutState)}
+      errorKind={
+        cutoutState.status === 'failed' ? cutoutState.errorKind : undefined
+      }
+      visualMode={cutoutUri ? 'real-cutout' : 'photo-fallback-cover'}
+      onRetry={() => setCutoutAttempt((attempt) => attempt + 1)}
+      bottomOffset={isValidated ? 8 : 170}
+    />
+  ) : null;
+
   // Success — brief cutout generation step (only while the remote provider
   // is actually working; the disabled provider resolves instantly).
   if (cutoutState.status === 'idle' || cutoutState.status === 'loading') {
-    return <LoadingStage imageUri={imageUri} label="Détourage de l'objet…" />;
+    return (
+      <View style={styles.flex}>
+        <LoadingStage imageUri={imageUri} label="Détourage de l'objet…" />
+        {debugPanel}
+      </View>
+    );
   }
-
-  const cutoutUri =
-    cutoutState.status === 'ready' ? cutoutState.cutoutUri : undefined;
 
   // Success — validation step (CapWords-like) before details.
   if (!isValidated) {
     return (
-      <ScanValidationStage
-        imageUri={imageUri}
-        cutoutUri={cutoutUri}
-        machineName={scanState.data.machineName}
-        machineSubtitle={MACHINE_TYPE_LABELS[scanState.data.machineType]}
-        needsConfirmation={scanState.data.needsConfirmation}
-        onConfirm={() => setIsValidated(true)}
-        onRetake={() => router.replace('/camera')}
-        onReject={() => router.replace('/')}
-      />
+      <View style={styles.flex}>
+        <ScanValidationStage
+          imageUri={imageUri}
+          cutoutUri={cutoutUri}
+          machineName={scanState.data.machineName}
+          machineSubtitle={MACHINE_TYPE_LABELS[scanState.data.machineType]}
+          needsConfirmation={scanState.data.needsConfirmation}
+          onConfirm={() => setIsValidated(true)}
+          onRetake={() => router.replace('/camera')}
+          onReject={() => router.replace('/')}
+        />
+        {debugPanel}
+      </View>
     );
   }
 
@@ -182,6 +214,17 @@ export default function ScanResultScreen() {
       onRetake={() => router.replace('/camera')}
     />
   );
+}
+
+function toCutoutDebugStatus(state: CutoutState): CutoutDebugStatus {
+  switch (state.status) {
+    case 'ready':
+      return 'success';
+    case 'failed':
+      return state.errorKind === 'cutout_disabled' ? 'disabled' : 'failed';
+    default:
+      return state.status;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -409,6 +452,9 @@ function SaveBlock({
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   lightStage: {
     backgroundColor: '#F8F8F5',
     justifyContent: 'center',

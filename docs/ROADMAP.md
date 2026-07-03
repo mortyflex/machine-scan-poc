@@ -37,6 +37,36 @@ Delivered:
 - `MachineScan.cutoutUri` persisted in SQLite (idempotent nullable-column
   migration); saved list and detail prefer `cutoutUri` over `imageUri`.
 
+## Phase 6.6.1 — Cutout mobile trigger debug and fallback display
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- backend `/health` was reachable from iPhone
+- no `POST /api/machine-cutout` appeared during scan
+- issue is on mobile trigger/env/config side, not remove.bg
+- added dev-only cutout debug panel and logs
+- improved no-cutout fallback from narrow vertical photo to wide
+  cover-style photo card
+
+Delivered:
+
+- `cutout-config.ts`: centralized `getCutoutConfig()` (provider +
+  apiBaseUrl + raw values for debug).
+- `__DEV__`-only logs in `generateMachineCutout` and the remote provider
+  (start / disabled / request / response / error — never the base64
+  payload or any secret).
+- `CutoutDebugPanel` (dev-only) on the cutout loading + validation
+  screens: provider / api / status / error / visual mode + a
+  `Relancer le détourage` retry button.
+- `remote` without `EXPO_PUBLIC_API_BASE_URL` → clear `invalid_input`
+  (`Missing EXPO_PUBLIC_API_BASE_URL`) instead of a silent localhost
+  default.
+- Server logs `[cutout-server] POST /api/machine-cutout` on each request.
+- Fallback photo card now fills wide (cover crop, radius 30) — still
+  clearly labeled `Détourage indisponible`, never presented as a cutout.
+
 Next phase:
 
 ```txt
