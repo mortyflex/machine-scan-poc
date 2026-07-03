@@ -50,6 +50,7 @@ type CutoutState =
       errorKind: CutoutErrorKind;
       providerStatus?: number;
       providerMessage?: string;
+      writeErrorMessage?: string;
     };
 
 const ERROR_MESSAGES: Record<RecognitionErrorKind, string> = {
@@ -129,6 +130,7 @@ export default function ScanResultScreen() {
             errorKind: result.error.kind,
             providerStatus: result.error.providerStatus,
             providerMessage: result.error.providerMessage,
+            writeErrorMessage: result.error.debugMessage,
           });
         }
       })
@@ -186,6 +188,11 @@ export default function ScanResultScreen() {
       providerMessage={
         cutoutState.status === 'failed'
           ? cutoutState.providerMessage
+          : undefined
+      }
+      writeErrorMessage={
+        cutoutState.status === 'failed'
+          ? cutoutState.writeErrorMessage
           : undefined
       }
       visualMode={cutoutUri ? 'real-cutout' : 'photo-fallback-cover'}

@@ -247,6 +247,37 @@ Automated (`server/cutout/cutout-service.test.ts`):
 - `remove-bg` without `REMOVE_BG_API_KEY` → `provider_error`.
 - debug info reports `hasRemoveBgApiKey` without exposing the key value.
 
+### iOS Cutout Local File Write (Phase 6.6.3)
+
+QA finding:
+
+- backend remove.bg pipeline returned HTTP 200 and valid PNG
+- mobile received HTTP 200 from backend
+- failure occurred while writing cutoutBase64 to local file
+- fixed cutout file writing for Expo SDK 54 / expo-file-system v19
+
+Manual (physical iPhone, Expo Go, remote provider + valid key):
+
+- After a scan, Metro logs show `[cutout] local-write:start` →
+  `local-write:directory` → `local-write:success` (with `exists: true`
+  and a plausible `size`).
+- The debug panel shows `status: success` and
+  `visual mode: real-cutout`; the detoured object renders in validation,
+  details, and saved list/detail, and survives an app restart.
+- If the write still fails, the panel shows `write error: <cause>` and
+  Metro logs `[cutout] local-write:error` with `causeName` /
+  `causeMessage` — copy these for diagnosis.
+
+Automated (`src/features/machine-scan/cutout/write-cutout-file.test.ts`):
+
+- mime type → extension mapping (png / webp / fallback).
+- `createCutoutFileName` unique names with the right extension.
+- `stripDataUriPrefix` removes a `data:...;base64,` prefix.
+- pure base64 decoder round-trips text and binary data, rejects invalid
+  payloads.
+- `writeCutoutBase64ToFile` returns `invalid_input` for empty or invalid
+  base64 without touching the filesystem.
+
 Manual visual consistency (no `cutoutUri`):
 
 - Recognition loading, `Détourage de l'objet…` loading, validation

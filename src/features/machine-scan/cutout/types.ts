@@ -17,6 +17,8 @@ export type CutoutError = {
   providerStatus?: number;
   /** Safe preview of the provider error (dev debug only, never a secret). */
   providerMessage?: string;
+  /** Safe local diagnostic detail (e.g. file write cause), dev debug only. */
+  debugMessage?: string;
   cause?: unknown;
 };
 

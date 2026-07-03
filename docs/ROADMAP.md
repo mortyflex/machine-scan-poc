@@ -98,6 +98,33 @@ Delivered:
   the recognition/cutout loading stages, the details fallback, and the
   saved detail fallback; the Skia validation fallback was already cover.
 
+## Phase 6.6.3 — iOS cutout local file write fix
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- backend remove.bg pipeline returned HTTP 200 and valid PNG
+- mobile received HTTP 200 from backend
+- failure occurred while writing cutoutBase64 to local file
+- fixed cutout file writing for Expo SDK 54 / expo-file-system v19
+
+Delivered:
+
+- New `write-cutout-file.ts` helper: explicit `file.create({ overwrite })`
+  before writing (the suspected iOS failure: `File.write` on a
+  non-existent file), and the payload is decoded to bytes with a pure
+  base64 decoder and written via `File.write(Uint8Array)` — no reliance
+  on the string `{ encoding: 'base64' }` native path.
+- Tolerates a `data:...;base64,` prefix, validates base64 before touching
+  the filesystem, mime-type → extension mapping (png/webp, fallback png).
+- Dev logs: `local-write:start` / `directory` / `success` (with exists +
+  size verification) / `error` (causeName + safe causeMessage) — never
+  the base64 payload.
+- Write failures propagate a safe `debugMessage` shown as `write error:`
+  in the dev debug panel.
+- Pure helpers unit-tested in Node (`write-cutout-file.test.ts`).
+
 Next phase:
 
 ```txt

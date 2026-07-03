@@ -1,12 +1,12 @@
-import { Directory, File, Paths } from 'expo-file-system';
+import { File } from 'expo-file-system';
 import { z } from 'zod';
 
 import { isDevBuild, type MobileCutoutConfig } from './cutout-config';
 import type { CutoutError, CutoutErrorKind, CutoutResult } from './types';
+import { writeCutoutBase64ToFile } from './write-cutout-file';
 
 const ENDPOINT = '/api/machine-cutout';
 const REQUEST_TIMEOUT_MS = 20_000;
-const CUTOUTS_DIRECTORY = 'machine-scan-cutouts';
 
 const remoteCutoutResponseSchema = z.object({
   cutoutBase64: z.string().min(1),
@@ -26,6 +26,7 @@ const remoteErrorResponseSchema = z.object({
 type ProviderErrorDetails = {
   providerStatus?: number;
   providerMessage?: string;
+  debugMessage?: string;
 };
 
 function failure(
@@ -40,6 +41,7 @@ function failure(
       message,
       providerStatus: details?.providerStatus,
       providerMessage: details?.providerMessage,
+      debugMessage: details?.debugMessage,
     });
   }
   const error: CutoutError = { kind, message };
@@ -49,6 +51,9 @@ function failure(
   }
   if (details?.providerMessage) {
     error.providerMessage = details.providerMessage.slice(0, 300);
+  }
+  if (details?.debugMessage) {
+    error.debugMessage = details.debugMessage.slice(0, 300);
   }
   return { ok: false, error };
 }
@@ -170,26 +175,20 @@ export async function requestRemoteCutout(
     );
   }
 
-  try {
-    const cutoutsDir = new Directory(Paths.document, CUTOUTS_DIRECTORY);
-    if (!cutoutsDir.exists) {
-      cutoutsDir.create({ intermediates: true });
-    }
-    const extension = parsed.data.mimeType === 'image/webp' ? 'webp' : 'png';
-    const file = new File(
-      cutoutsDir,
-      `machine-cutout-${Date.now()}.${extension}`,
-    );
-    file.write(parsed.data.cutoutBase64, { encoding: 'base64' });
-    return {
-      ok: true,
-      data: { cutoutUri: file.uri, method: 'remote' },
-    };
-  } catch (error) {
+  const writeResult = await writeCutoutBase64ToFile({
+    cutoutBase64: parsed.data.cutoutBase64,
+    mimeType: parsed.data.mimeType ?? 'image/png',
+  });
+  if (!writeResult.ok) {
     return failure(
       'cutout_failed',
       "L'enregistrement local du cutout a échoué.",
-      error,
+      writeResult.error.cause,
+      { debugMessage: writeResult.error.message },
     );
   }
+  return {
+    ok: true,
+    data: { cutoutUri: writeResult.data.cutoutUri, method: 'remote' },
+  };
 }

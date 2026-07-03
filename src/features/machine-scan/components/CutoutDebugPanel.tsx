@@ -16,6 +16,8 @@ export type CutoutDebugPanelProps = {
   providerStatus?: number;
   /** Safe preview of the provider error message (never a secret). */
   providerMessage?: string;
+  /** Safe local file-write error detail (never a secret). */
+  writeErrorMessage?: string;
   visualMode: 'real-cutout' | 'photo-fallback-cover';
   onRetry?: () => void;
   /** Extra bottom spacing so the panel doesn't cover action buttons. */
@@ -35,6 +37,7 @@ export function CutoutDebugPanel({
   errorKind,
   providerStatus,
   providerMessage,
+  writeErrorMessage,
   visualMode,
   onRetry,
   bottomOffset = 8,
@@ -59,6 +62,11 @@ export function CutoutDebugPanel({
         {providerMessage ? (
           <Text style={styles.line} numberOfLines={4}>
             provider message: {providerMessage}
+          </Text>
+        ) : null}
+        {writeErrorMessage ? (
+          <Text style={styles.line} numberOfLines={4}>
+            write error: {writeErrorMessage}
           </Text>
         ) : null}
         <Text style={styles.line}>visual mode: {visualMode}</Text>
