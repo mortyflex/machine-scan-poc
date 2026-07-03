@@ -141,6 +141,66 @@ never throws for these expected business errors; callers branch on
 `result.ok`. A provider may still throw internally, but the public API
 converts that into `{ ok: false, error: { kind: 'provider_error', ... } }`.
 
+## Cutout Backend Contract (Phase 6.6)
+
+Separate from recognition: the cutout pipeline isolates the main object
+as a transparent PNG. The mobile app never talks to the segmentation
+provider directly and never holds its key.
+
+Endpoint:
+
+```txt
+POST ${EXPO_PUBLIC_API_BASE_URL}/api/machine-cutout
+```
+
+Request (JSON):
+
+```json
+{
+  "imageBase64": "...",
+  "mimeType": "image/jpeg"
+}
+```
+
+Success response (200):
+
+```json
+{
+  "cutoutBase64": "...",
+  "mimeType": "image/png",
+  "method": "remote"
+}
+```
+
+Error response (400 / 502 / 503):
+
+```json
+{
+  "error": {
+    "kind": "invalid_input | cutout_disabled | cutout_failed | provider_error | invalid_response",
+    "message": "..."
+  }
+}
+```
+
+App-side error kinds (`generateMachineCutout`, typed `CutoutResult`,
+never throws for expected states):
+
+- `invalid_input`: empty `imageUri` or unreadable local file.
+- `cutout_disabled`: `EXPO_PUBLIC_CUTOUT_PROVIDER` is `disabled`/unknown.
+- `cutout_unavailable`: the server has cutout disabled.
+- `network_error`: backend unreachable or timeout (20s).
+- `cutout_failed`: backend non-2xx or local file write failure.
+- `invalid_response`: response is not valid JSON matching the contract
+  (validated with Zod).
+
+Server provider selection (`server/.env`, never mobile):
+
+```txt
+CUTOUT_PROVIDER=disabled | remove-bg
+REMOVE_BG_API_KEY=<secret, server-side only>
+```
+
 ## Prompt
 
 ```txt

@@ -6,6 +6,7 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { recognizeMachine } from '@/features/machine-scan/api';
 import type { RecognitionErrorKind } from '@/features/machine-scan/api';
+import { generateMachineCutout } from '@/features/machine-scan/cutout';
 import {
   MachineResultCard,
   ScanValidationStage,
@@ -33,6 +34,12 @@ type SaveState =
   | { status: 'saved'; id: string }
   | { status: 'error' };
 
+type CutoutState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'ready'; cutoutUri: string }
+  | { status: 'unavailable' };
+
 const ERROR_MESSAGES: Record<RecognitionErrorKind, string> = {
   missing_image:
     "Aucune image à analyser. Reprends une photo pour lancer la reconnaissance.",
@@ -58,6 +65,9 @@ export default function ScanResultScreen() {
     typeof params.imageUri === 'string' ? params.imageUri : undefined;
 
   const [scanState, setScanState] = useState<ScanState>({ status: 'idle' });
+  const [cutoutState, setCutoutState] = useState<CutoutState>({
+    status: 'idle',
+  });
   const [isValidated, setIsValidated] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -67,6 +77,7 @@ export default function ScanResultScreen() {
     }
     let cancelled = false;
     setScanState({ status: 'loading' });
+    setCutoutState({ status: 'idle' });
     recognizeMachine(imageUri)
       .then((result) => {
         if (cancelled) return;
@@ -84,6 +95,32 @@ export default function ScanResultScreen() {
       cancelled = true;
     };
   }, [imageUri, retryCount]);
+
+  // Real cutout generation, kicked off after recognition success. Failures
+  // are non-blocking: the validation stage falls back to the honest photo.
+  useEffect(() => {
+    if (scanState.status !== 'success' || !imageUri) {
+      return;
+    }
+    let cancelled = false;
+    setCutoutState({ status: 'loading' });
+    generateMachineCutout(imageUri)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.ok) {
+          setCutoutState({ status: 'ready', cutoutUri: result.data.cutoutUri });
+        } else {
+          setCutoutState({ status: 'unavailable' });
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCutoutState({ status: 'unavailable' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scanState.status, imageUri, retryCount]);
 
   const handleRetry = () => {
     setIsValidated(false);
@@ -108,14 +145,24 @@ export default function ScanResultScreen() {
     scanState.status === 'idle' ||
     scanState.status === 'loading'
   ) {
-    return <LoadingStage imageUri={imageUri} />;
+    return <LoadingStage imageUri={imageUri} label="Analyse de la machine…" />;
   }
+
+  // Success — brief cutout generation step (only while the remote provider
+  // is actually working; the disabled provider resolves instantly).
+  if (cutoutState.status === 'idle' || cutoutState.status === 'loading') {
+    return <LoadingStage imageUri={imageUri} label="Détourage de l'objet…" />;
+  }
+
+  const cutoutUri =
+    cutoutState.status === 'ready' ? cutoutState.cutoutUri : undefined;
 
   // Success — validation step (CapWords-like) before details.
   if (!isValidated) {
     return (
       <ScanValidationStage
         imageUri={imageUri}
+        cutoutUri={cutoutUri}
         machineName={scanState.data.machineName}
         machineSubtitle={MACHINE_TYPE_LABELS[scanState.data.machineType]}
         needsConfirmation={scanState.data.needsConfirmation}
@@ -131,6 +178,7 @@ export default function ScanResultScreen() {
     <DetailsStage
       data={scanState.data}
       imageUri={imageUri}
+      cutoutUri={cutoutUri}
       onRetake={() => router.replace('/camera')}
     />
   );
@@ -140,7 +188,13 @@ export default function ScanResultScreen() {
 /* Loading stage                                                               */
 /* -------------------------------------------------------------------------- */
 
-function LoadingStage({ imageUri }: { imageUri: string }) {
+function LoadingStage({
+  imageUri,
+  label,
+}: {
+  imageUri: string;
+  label: string;
+}) {
   return (
     <Screen style={styles.lightStage}>
       <View style={styles.loadingBody}>
@@ -153,7 +207,7 @@ function LoadingStage({ imageUri }: { imageUri: string }) {
         </View>
         <ActivityIndicator color="#6B6B6B" size="small" />
         <AppText variant="body" color="textSecondary" align="center">
-          Analyse de la machine…
+          {label}
         </AppText>
       </View>
     </Screen>
@@ -167,10 +221,12 @@ function LoadingStage({ imageUri }: { imageUri: string }) {
 function DetailsStage({
   data,
   imageUri,
+  cutoutUri,
   onRetake,
 }: {
   data: MachineRecognitionResult;
   imageUri: string;
+  cutoutUri?: string;
   onRetake: () => void;
 }) {
   return (
@@ -185,8 +241,9 @@ function DetailsStage({
           entering={FadeInUp.delay(80).duration(450)}
           style={styles.detailsBlock}
         >
+          <DetailsVisual imageUri={imageUri} cutoutUri={cutoutUri} />
           <MachineResultCard result={data} />
-          <SaveBlock data={data} imageUri={imageUri} />
+          <SaveBlock data={data} imageUri={imageUri} cutoutUri={cutoutUri} />
         </Animated.View>
 
         <View style={styles.actions}>
@@ -197,6 +254,42 @@ function DetailsStage({
         </View>
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * Top visual of the details screen: the real transparent cutout on a light
+ * stage with a soft shadow when available, otherwise the honest full photo
+ * (contained, never squeezed, never presented as a cutout).
+ */
+function DetailsVisual({
+  imageUri,
+  cutoutUri,
+}: {
+  imageUri: string;
+  cutoutUri?: string;
+}) {
+  if (cutoutUri) {
+    return (
+      <View style={styles.detailsCutoutStage}>
+        <View style={styles.detailsCutoutShadow}>
+          <Image
+            source={{ uri: cutoutUri }}
+            style={styles.detailsCutoutImage}
+            contentFit="contain"
+          />
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.detailsPhotoCard}>
+      <Image
+        source={{ uri: imageUri }}
+        style={styles.detailsPhoto}
+        contentFit="contain"
+      />
+    </View>
   );
 }
 
@@ -261,15 +354,17 @@ function MissingImageScreen() {
 function SaveBlock({
   data,
   imageUri,
+  cutoutUri,
 }: {
   data: MachineRecognitionResult;
   imageUri: string;
+  cutoutUri?: string;
 }) {
   const [state, setState] = useState<SaveState>({ status: 'idle' });
 
   const handleSave = () => {
     setState({ status: 'saving' });
-    saveMachineScan(toMachineScanInput(data, imageUri))
+    saveMachineScan(toMachineScanInput(data, imageUri, cutoutUri))
       .then((result) => {
         if (result.ok) {
           setState({ status: 'saved', id: result.data.id });
@@ -348,6 +443,34 @@ const styles = StyleSheet.create({
   },
   detailsBlock: {
     gap: spacing.md,
+  },
+  detailsCutoutStage: {
+    backgroundColor: '#F8F8F5',
+    borderRadius: 20,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  detailsCutoutShadow: {
+    width: '78%',
+    aspectRatio: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    elevation: 8,
+  },
+  detailsCutoutImage: {
+    width: '100%',
+    height: '100%',
+  },
+  detailsPhotoCard: {
+    backgroundColor: '#F8F8F5',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  detailsPhoto: {
+    width: '100%',
+    aspectRatio: 4 / 3,
   },
   actions: {
     gap: spacing.sm,

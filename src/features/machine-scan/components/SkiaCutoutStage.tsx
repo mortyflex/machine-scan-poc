@@ -166,7 +166,7 @@ export function SkiaCutoutStage({
           </View>
         ) : null}
         {!useRealCutout ? (
-          <Text style={styles.fallbackHint}>Détourage bientôt disponible</Text>
+          <Text style={styles.fallbackHint}>Détourage indisponible</Text>
         ) : null}
       </Animated.View>
     </View>

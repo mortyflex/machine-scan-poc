@@ -295,6 +295,47 @@ needed. No cutout is generated on-device in this phase.
   `ScanValidationStage` render is recoverable via git; documented as a
   fallback.
 
+## Phase 6.6 — Real cutoutUri generation
+
+QA decision:
+
+- layout and Skia renderer are not enough
+- CapWords-like validation requires a real transparent object cutout
+- mobile app now requests the cutout from backend
+- server-side provider generates a transparent PNG/WebP
+- Skia renders cutoutUri when available
+- fallback photo-card is used only when cutout is unavailable
+- no secret is exposed in mobile code
+
+Pipeline:
+
+```txt
+photo capture
+→ recognition success
+→ generateMachineCutout(imageUri)   (EXPO_PUBLIC_CUTOUT_PROVIDER=remote)
+→ POST /api/machine-cutout (base64 JSON, secret key server-side)
+→ transparent PNG written to machine-scan-cutouts/ (document dir)
+→ SkiaCutoutStage real-cutout mode (glow + shadow + label)
+→ user validates → details show the cutout → save persists cutoutUri
+```
+
+States:
+
+- `EXPO_PUBLIC_CUTOUT_PROVIDER=disabled` (default): no backend call, the
+  validation stage shows the honest photo fallback with the discrete hint
+  `Détourage indisponible`.
+- `remote` + backend working: a brief `Détourage de l'objet…` loading
+  stage, then the real detoured object.
+- `remote` + backend down/failed: non-blocking, honest fallback (same as
+  disabled). Errors never block validation.
+
+Details / saved screens:
+
+- Details top visual: real cutout on a light stage with soft shadow when
+  available, otherwise the clean full photo (contain, never squeezed).
+- Saved list thumbnails and saved detail prefer `cutoutUri`, falling back
+  to `imageUri`.
+
 
 
 

@@ -115,6 +115,55 @@ state machine (missing / loading / success / error) and wires
 try/catch for expected business errors; a defensive `.catch()` only
 covers impossible failures as `provider_error`.
 
+### Cutout Feature (Phase 6.6)
+
+`src/features/machine-scan/cutout/`:
+
+- `types.ts`: `CutoutProvider` (`disabled | remote`), `CutoutMethod`
+  (`none | remote`), `CutoutErrorKind`
+  (`invalid_input | cutout_disabled | cutout_unavailable | cutout_failed |
+  network_error | invalid_response`), and the `CutoutResult` discriminated
+  union.
+- `generate-cutout.ts`: public API
+  `generateMachineCutout(imageUri): Promise<CutoutResult>`. Never throws
+  for expected states. Provider selection reads
+  `EXPO_PUBLIC_CUTOUT_PROVIDER` (default `disabled`; unknown values are
+  treated as disabled). The remote provider is lazy-imported so tests run
+  in plain Node.
+- `remote-cutout-provider.ts`: reads the local photo as base64
+  (`expo-file-system` `File.base64()`), POSTs
+  `{ imageBase64, mimeType }` JSON to
+  `${EXPO_PUBLIC_API_BASE_URL}/api/machine-cutout` with a 20s timeout,
+  validates the response with Zod, writes the returned transparent PNG
+  into the durable `machine-scan-cutouts/` folder under the document
+  directory, and returns a local `cutoutUri`. All expected failures map
+  to typed error kinds (timeout/backend down → `network_error`, non-2xx →
+  `cutout_failed`, server disabled → `cutout_unavailable`, bad JSON →
+  `invalid_response`).
+
+Cutout backend (`server/`, run with `npm run server:dev`):
+
+- `server/index.ts`: Node HTTP server (port 3000 by default),
+  `POST /api/machine-cutout` (base64 JSON in, base64 PNG out) and
+  `GET /health`. Loads the repo-root `.env` if present.
+- `server/cutout/types.ts`: `ServerCutoutResult` typed union +
+  `CUTOUT_PROVIDER` resolution (`disabled | remove-bg`, default disabled).
+- `server/cutout/cutout-service.ts`: provider dispatch + input validation.
+- `server/cutout/providers/disabled.ts`: honest disabled provider
+  (503 `cutout_disabled`, never fakes a cutout).
+- `server/cutout/providers/remove-bg.ts`: remove.bg integration
+  (`REMOVE_BG_API_KEY`, server-side only, isolated and replaceable).
+
+Secret keys never reach the mobile bundle: only
+`EXPO_PUBLIC_CUTOUT_PROVIDER` and `EXPO_PUBLIC_API_BASE_URL` are allowed
+app-side.
+
+`scan-result` flow: after recognition success, `generateMachineCutout`
+runs (brief `Détourage de l'objet…` stage while remote is working); its
+failure is non-blocking — the validation stage falls back to the honest
+photo card with a discrete `Détourage indisponible` hint. `cutoutUri` is
+passed to `ScanValidationStage`, the details visual, and the save input.
+
 ### Storage
 
 Use local SQLite for POC.
@@ -160,6 +209,7 @@ Saved entity:
 export type MachineScan = {
   id: string;
   imageUri: string;
+  cutoutUri?: string;
   machineName: string;
   machineType: string;
   confidence: number;
@@ -177,6 +227,13 @@ export type MachineScan = {
 Arrays (`primaryMuscles`, `secondaryMuscles`, `possibleExercises`,
 `alternativeNames`) are stored as JSON `TEXT` columns and parsed back on
 read. `needsConfirmation` is stored as `INTEGER` (0/1).
+
+`cutoutUri` (Phase 6.6) is a nullable `TEXT` column. Databases created
+before Phase 6.6 are migrated idempotently at init
+(`PRAGMA table_info` check + `ALTER TABLE ... ADD COLUMN cutoutUri TEXT`);
+older rows stay valid with `cutoutUri = NULL` (mapped to `undefined`).
+Saved list (`SavedMachineCard`) and machine detail prefer `cutoutUri`
+over `imageUri` when present.
 
 Exercise entity:
 

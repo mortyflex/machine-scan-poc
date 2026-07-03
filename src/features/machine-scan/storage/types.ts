@@ -23,6 +23,7 @@ export type SaveMachineScanInput = Omit<MachineScan, 'id' | 'createdAt'>;
 export type MachineScanRow = {
   id: string;
   imageUri: string;
+  cutoutUri?: string | null;
   machineName: string;
   machineType: string;
   confidence: number;

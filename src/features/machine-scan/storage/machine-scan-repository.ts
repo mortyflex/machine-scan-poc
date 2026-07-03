@@ -36,16 +36,20 @@ export async function saveMachineScan(
 
   try {
     const persistedUri = await persistImage(input.imageUri, id);
+    const persistedCutoutUri = input.cutoutUri
+      ? await persistImage(input.cutoutUri, `${id}-cutout`)
+      : null;
     const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO machine_scans (
-        id, imageUri, machineName, machineType, confidence, description,
+        id, imageUri, cutoutUri, machineName, machineType, confidence, description,
         primaryMuscles, secondaryMuscles, possibleExercises, alternativeNames,
         needsConfirmation, uncertaintyReason, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         persistedUri,
+        persistedCutoutUri,
         input.machineName,
         input.machineType,
         input.confidence,
@@ -64,6 +68,7 @@ export async function saveMachineScan(
       data: {
         id,
         imageUri: persistedUri,
+        cutoutUri: persistedCutoutUri ?? undefined,
         machineName: input.machineName,
         machineType: input.machineType,
         confidence: input.confidence,

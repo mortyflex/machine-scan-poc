@@ -14,6 +14,7 @@ export function SavedMachineCard({ machine }: SavedMachineCardProps) {
   const router = useRouter();
   const theme = useAppTheme();
   const percent = Math.round(machine.confidence * 100);
+  const hasCutout = Boolean(machine.cutoutUri);
 
   return (
     <Pressable
@@ -23,9 +24,9 @@ export function SavedMachineCard({ machine }: SavedMachineCardProps) {
       <Card style={styles.card}>
         <View style={styles.body}>
           <Image
-            source={{ uri: machine.imageUri }}
-            style={styles.thumb}
-            contentFit="cover"
+            source={{ uri: machine.cutoutUri ?? machine.imageUri }}
+            style={[styles.thumb, hasCutout && styles.cutoutThumb]}
+            contentFit={hasCutout ? 'contain' : 'cover'}
           />
           <View style={styles.info}>
             <AppText variant="subtitle" style={styles.name}>
@@ -80,6 +81,9 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: radius.md,
     backgroundColor: '#000',
+  },
+  cutoutThumb: {
+    backgroundColor: '#F8F8F5',
   },
   info: {
     flex: 1,

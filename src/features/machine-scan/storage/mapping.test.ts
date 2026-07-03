@@ -95,6 +95,20 @@ test('mapRowToMachineScan is resilient to corrupted JSON arrays', () => {
   assert.deepEqual(scan.possibleExercises, []);
 });
 
+test('mapRowToMachineScan preserves cutoutUri when present', () => {
+  const scan = mapRowToMachineScan(
+    validRow({ cutoutUri: 'file:///cutouts/machine-cutout-1.png' }),
+  );
+  assert.equal(scan.cutoutUri, 'file:///cutouts/machine-cutout-1.png');
+});
+
+test('mapRowToMachineScan maps a missing or null cutoutUri to undefined', () => {
+  const withoutColumn = mapRowToMachineScan(validRow());
+  assert.equal(withoutColumn.cutoutUri, undefined);
+  const withNull = mapRowToMachineScan(validRow({ cutoutUri: null }));
+  assert.equal(withNull.cutoutUri, undefined);
+});
+
 test('toMachineScanInput builds the storage input from a recognition result', () => {
   const input = toMachineScanInput(recognition, 'file:///scan.jpg');
   assert.equal(input.imageUri, 'file:///scan.jpg');
@@ -105,6 +119,17 @@ test('toMachineScanInput builds the storage input from a recognition result', ()
   assert.equal(input.uncertaintyReason, recognition.uncertaintyReason);
   assert.deepEqual(input.primaryMuscles, recognition.primaryMuscles);
   assert.deepEqual(input.possibleExercises, recognition.possibleExercises);
+});
+
+test('toMachineScanInput preserves an optional cutoutUri', () => {
+  const withoutCutout = toMachineScanInput(recognition, 'file:///scan.jpg');
+  assert.equal(withoutCutout.cutoutUri, undefined);
+  const withCutout = toMachineScanInput(
+    recognition,
+    'file:///scan.jpg',
+    'file:///cutouts/machine-cutout-1.png',
+  );
+  assert.equal(withCutout.cutoutUri, 'file:///cutouts/machine-cutout-1.png');
 });
 
 test('toRecognitionResult extracts recognition fields from a scan', () => {

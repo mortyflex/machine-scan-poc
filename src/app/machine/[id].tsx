@@ -130,13 +130,25 @@ export default function MachineDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Card style={styles.imageCard}>
-          <Image
-            source={{ uri: scan.imageUri }}
-            style={styles.image}
-            contentFit="contain"
-          />
-        </Card>
+        {scan.cutoutUri ? (
+          <View style={styles.cutoutStage}>
+            <View style={styles.cutoutShadow}>
+              <Image
+                source={{ uri: scan.cutoutUri }}
+                style={styles.cutoutImage}
+                contentFit="contain"
+              />
+            </View>
+          </View>
+        ) : (
+          <Card style={styles.imageCard}>
+            <Image
+              source={{ uri: scan.imageUri }}
+              style={styles.image}
+              contentFit="contain"
+            />
+          </Card>
+        )}
 
         <MachineResultCard
           result={{
@@ -195,6 +207,25 @@ const styles = StyleSheet.create({
   imageCard: {
     padding: 0,
     overflow: 'hidden',
+  },
+  cutoutStage: {
+    backgroundColor: '#F8F8F5',
+    borderRadius: 20,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  cutoutShadow: {
+    width: '78%',
+    aspectRatio: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    elevation: 8,
+  },
+  cutoutImage: {
+    width: '100%',
+    height: '100%',
   },
   image: {
     width: '100%',

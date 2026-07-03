@@ -11,6 +11,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS machine_scans (
   id TEXT PRIMARY KEY NOT NULL,
   imageUri TEXT NOT NULL,
+  cutoutUri TEXT,
   machineName TEXT NOT NULL,
   machineType TEXT NOT NULL,
   confidence REAL NOT NULL,
@@ -44,6 +45,7 @@ export function initMachineScanDatabase(): Promise<StorageResult<void>> {
     try {
       const db = await getDatabase();
       await db.execAsync(SCHEMA);
+      await migrateAddCutoutUriColumn(db);
       return { ok: true, data: undefined };
     } catch (error) {
       return {
@@ -57,4 +59,18 @@ export function initMachineScanDatabase(): Promise<StorageResult<void>> {
     }
   })();
   return initPromise;
+}
+
+/**
+ * Idempotent migration: databases created before Phase 6.6 lack the nullable
+ * `cutoutUri` column. Older rows stay valid (cutoutUri = NULL).
+ */
+async function migrateAddCutoutUriColumn(db: SQLiteDatabase): Promise<void> {
+  const columns = await db.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(machine_scans)`,
+  );
+  const hasCutoutUri = columns.some((column) => column.name === 'cutoutUri');
+  if (!hasCutoutUri) {
+    await db.execAsync(`ALTER TABLE machine_scans ADD COLUMN cutoutUri TEXT`);
+  }
 }

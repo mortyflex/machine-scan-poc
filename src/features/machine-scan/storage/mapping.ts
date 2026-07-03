@@ -13,9 +13,11 @@ import type {
 export function toMachineScanInput(
   data: MachineRecognitionResult,
   imageUri: string,
+  cutoutUri?: string,
 ): SaveMachineScanInput {
   return {
     imageUri,
+    cutoutUri,
     machineName: data.machineName,
     machineType: data.machineType,
     confidence: data.confidence,
@@ -50,6 +52,7 @@ export function mapRowToMachineScan(row: MachineScanRow): MachineScan {
   return {
     id: row.id,
     imageUri: row.imageUri,
+    cutoutUri: row.cutoutUri ?? undefined,
     machineName: row.machineName,
     machineType: row.machineType as MachineType,
     confidence: row.confidence,

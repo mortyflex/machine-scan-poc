@@ -150,6 +150,40 @@ Manual: app should remain openable; no UI wiring in this phase.
   success; app remains responsive on iPhone.
 - Save / saved / SQLite persistence and CTAs remain functional.
 
+### Cutout Pipeline (Phase 6.6)
+
+Manual (physical iPhone, Expo Go):
+
+- With `EXPO_PUBLIC_CUTOUT_PROVIDER=disabled` (default): the scan flow is
+  unchanged — validation shows the honest photo card with the discrete
+  hint `Détourage indisponible`; no backend call is made; nothing blocks.
+- With `EXPO_PUBLIC_CUTOUT_PROVIDER=remote` and the server running with
+  `CUTOUT_PROVIDER=remove-bg` + `REMOVE_BG_API_KEY`:
+  - after recognition, a brief `Détourage de l'objet…` stage appears;
+  - the validation stage then shows the real transparent object centered
+    on the light background with glow + shadow (no white photo rectangle);
+  - the details screen shows the cutout at the top;
+  - after save, the saved list thumbnail and detail use the cutout;
+  - after app restart, the saved cutout still displays (durable
+    `machine-scan-cutouts/` folder).
+- With `remote` but the backend stopped or failing: recognition still
+  works, validation falls back to the honest photo card + hint; no crash,
+  no infinite loading.
+- Old saved machines (created before Phase 6.6) still load: list/detail
+  fall back to `imageUri`.
+
+Automated (`src/features/machine-scan/cutout/generate-cutout.test.ts`):
+
+- empty `imageUri` → `{ ok: false, kind: 'invalid_input' }`.
+- provider `disabled` → `{ ok: false, kind: 'cutout_disabled' }`.
+- unknown provider value → treated as disabled.
+
+Automated (`src/features/machine-scan/storage/mapping.test.ts` additions):
+
+- row `cutoutUri` is preserved through `mapRowToMachineScan`.
+- missing/NULL `cutoutUri` maps to `undefined`.
+- `toMachineScanInput` preserves an optional `cutoutUri`.
+
 ### Remote AI
 
 - Mock provider still works.
@@ -179,7 +213,7 @@ Phase 3 + 5 automated tests (Node test runner via `tsx`, no framework):
 Run with:
 
 ```bash
-npx tsx --test src/features/machine-scan/api/recognize.test.ts src/features/machine-scan/storage/mapping.test.ts
+npx tsx --test src/features/machine-scan/api/recognize.test.ts src/features/machine-scan/storage/mapping.test.ts src/features/machine-scan/cutout/generate-cutout.test.ts
 ```
 
 ## Required Checks Before Commit

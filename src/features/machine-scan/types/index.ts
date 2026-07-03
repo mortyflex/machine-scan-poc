@@ -33,6 +33,8 @@ export type MachineRecognitionResult = {
 export type MachineScan = {
   id: string;
   imageUri: string;
+  /** Local URI of the transparent object cutout (PNG/WebP), when available. */
+  cutoutUri?: string;
   machineName: string;
   machineType: MachineType;
   confidence: number;
