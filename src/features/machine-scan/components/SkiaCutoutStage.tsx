@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
+  BlendColor,
   Blur,
   Canvas,
   Circle,
@@ -14,7 +15,14 @@ import {
   rrect,
   useImage,
 } from '@shopify/react-native-skia';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  ZoomIn,
+  useDerivedValue,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 export type SkiaCutoutStageProps = {
   imageUri: string;
@@ -31,6 +39,37 @@ const STAGE_BG = '#F8F8F5';
 const TITLE_COLOR = '#111111';
 const SUBTITLE_COLOR = '#6B6B6B';
 const CARD_RADIUS = 30;
+const REVEAL_DURATION_MS = 900;
+
+// Sticker illusion: the cutout silhouette is drawn in white at slight
+// offsets behind the real image, hugging the alpha of the PNG.
+const STICKER_OFFSETS: readonly [number, number][] = [
+  [-1.5, 0],
+  [1.5, 0],
+  [0, -1.5],
+  [0, 1.5],
+  [-1, -1],
+  [1, 1],
+];
+
+// Deterministic dust field for the reveal (fractions of the card rect +
+// outward drift). Sober off-white fragments, one-shot, never looping.
+const REVEAL_PARTICLES = [
+  { fx: 0.06, fy: 0.12, dx: -34, dy: -52, r: 2.6, color: 'rgba(255,255,255,0.95)' },
+  { fx: 0.18, fy: 0.04, dx: 14, dy: -66, r: 2.0, color: 'rgba(232,232,226,0.9)' },
+  { fx: 0.34, fy: 0.09, dx: 30, dy: -58, r: 2.8, color: 'rgba(255,255,255,0.9)' },
+  { fx: 0.52, fy: 0.03, dx: 44, dy: -70, r: 1.8, color: 'rgba(240,238,230,0.9)' },
+  { fx: 0.68, fy: 0.08, dx: 52, dy: -54, r: 2.4, color: 'rgba(255,255,255,0.95)' },
+  { fx: 0.86, fy: 0.05, dx: 62, dy: -64, r: 2.0, color: 'rgba(232,232,226,0.9)' },
+  { fx: 0.96, fy: 0.16, dx: 70, dy: -40, r: 2.6, color: 'rgba(255,255,255,0.9)' },
+  { fx: 0.04, fy: 0.55, dx: -52, dy: -26, r: 2.2, color: 'rgba(240,238,230,0.9)' },
+  { fx: 0.97, fy: 0.48, dx: 64, dy: -22, r: 2.4, color: 'rgba(255,255,255,0.9)' },
+  { fx: 0.08, fy: 0.90, dx: -40, dy: 20, r: 2.0, color: 'rgba(232,232,226,0.9)' },
+  { fx: 0.30, fy: 0.96, dx: 18, dy: 34, r: 2.4, color: 'rgba(255,255,255,0.9)' },
+  { fx: 0.56, fy: 0.93, dx: 36, dy: 28, r: 1.8, color: 'rgba(240,238,230,0.9)' },
+  { fx: 0.78, fy: 0.95, dx: 50, dy: 24, r: 2.2, color: 'rgba(255,255,255,0.95)' },
+  { fx: 0.92, fy: 0.85, dx: 60, dy: 12, r: 2.0, color: 'rgba(232,232,226,0.9)' },
+];
 
 export function SkiaCutoutStage({
   imageUri,
@@ -58,6 +97,32 @@ export function SkiaCutoutStage({
   useEffect(() => {
     setCutoutFailed(false);
   }, [cutoutUri]);
+
+  // One-shot "dust away" reveal: the photo card dissolves and the real
+  // cutout fades in. Plays once when the cutout becomes displayable and
+  // never loops; without a cutout the progress stays at 0 and the honest
+  // fallback renders as before.
+  const revealProgress = useSharedValue(0);
+  const hasRevealed = useRef(false);
+  useEffect(() => {
+    if (useRealCutout && !hasRevealed.current) {
+      hasRevealed.current = true;
+      revealProgress.value = withTiming(1, {
+        duration: REVEAL_DURATION_MS,
+        easing: Easing.out(Easing.cubic),
+      });
+    }
+  }, [useRealCutout, revealProgress]);
+
+  const photoOpacity = useDerivedValue(() =>
+    Math.max(0, 1 - revealProgress.value * 1.8),
+  );
+  const cutoutOpacity = useDerivedValue(() =>
+    Math.min(1, Math.max(0, (revealProgress.value - 0.25) / 0.5)),
+  );
+  const cutoutLift = useDerivedValue(() => [
+    { translateY: (1 - revealProgress.value) * 14 },
+  ]);
 
   const layout = useMemo(
     () => computeLayout(size, useRealCutout),
@@ -108,65 +173,146 @@ export function SkiaCutoutStage({
             </Circle>
           ) : null}
 
-          {/* Soft shadow under the object */}
-          {layout.shadowW > 0 ? (
-            <Oval
-              x={layout.shadowX}
-              y={layout.shadowY}
-              width={layout.shadowW}
-              height={layout.shadowH}
-              color="rgba(0,0,0,0.16)"
-            >
-              <Blur blur={18} />
-            </Oval>
-          ) : null}
-
           {useRealCutout ? (
-            <Image
-              image={cutoutImage}
-              x={layout.objX}
-              y={layout.objY}
-              width={layout.objW}
-              height={layout.objH}
-              fit="contain"
-            />
-          ) : (
-            <Group>
-              <RoundedRect
-                x={layout.cardX}
-                y={layout.cardY}
-                width={layout.cardW}
-                height={layout.cardH}
-                r={CARD_RADIUS}
-                color="#FFFFFF"
-              />
-              {/* Honest photo preview, not a cutout: cover-style crop so the
-                  photo fills the whole card instead of a narrow contained
-                  strip. Aspect ratio is preserved by fit="cover". */}
-              {photoImage ? (
-                <Group
-                  clip={rrect(
-                    rect(
-                      layout.cardX,
-                      layout.cardY,
-                      layout.cardW,
-                      layout.cardH,
-                    ),
-                    CARD_RADIUS,
-                    CARD_RADIUS,
-                  )}
-                >
+            <>
+              {/* Cutout layer: shadow + sticker border + object, fading in */}
+              <Group opacity={cutoutOpacity} transform={cutoutLift}>
+                {layout.shadowW > 0 ? (
+                  <Oval
+                    x={layout.shadowX}
+                    y={layout.shadowY}
+                    width={layout.shadowW}
+                    height={layout.shadowH}
+                    color="rgba(0,0,0,0.16)"
+                  >
+                    <Blur blur={18} />
+                  </Oval>
+                ) : null}
+                {STICKER_OFFSETS.map(([dx, dy], i) => (
                   <Image
-                    image={photoImage}
+                    key={i}
+                    image={cutoutImage}
+                    x={layout.objX + dx}
+                    y={layout.objY + dy}
+                    width={layout.objW}
+                    height={layout.objH}
+                    fit="contain"
+                  >
+                    <BlendColor color="rgba(255,255,255,0.85)" mode="srcIn" />
+                  </Image>
+                ))}
+                <Image
+                  image={cutoutImage}
+                  x={layout.objX}
+                  y={layout.objY}
+                  width={layout.objW}
+                  height={layout.objH}
+                  fit="contain"
+                />
+              </Group>
+
+              {/* Photo card dissolving away above the cutout */}
+              {photoImage && layout.cardW > 0 ? (
+                <Group opacity={photoOpacity}>
+                  <RoundedRect
                     x={layout.cardX}
                     y={layout.cardY}
                     width={layout.cardW}
                     height={layout.cardH}
-                    fit="cover"
+                    r={CARD_RADIUS}
+                    color="#FFFFFF"
                   />
+                  <Group
+                    clip={rrect(
+                      rect(
+                        layout.cardX,
+                        layout.cardY,
+                        layout.cardW,
+                        layout.cardH,
+                      ),
+                      CARD_RADIUS,
+                      CARD_RADIUS,
+                    )}
+                  >
+                    <Image
+                      image={photoImage}
+                      x={layout.cardX}
+                      y={layout.cardY}
+                      width={layout.cardW}
+                      height={layout.cardH}
+                      fit="cover"
+                    />
+                  </Group>
                 </Group>
               ) : null}
-            </Group>
+
+              {/* One-shot dust particles carried away with the background */}
+              {layout.cardW > 0
+                ? REVEAL_PARTICLES.map((particle, i) => (
+                    <RevealParticle
+                      key={i}
+                      progress={revealProgress}
+                      x={layout.cardX + particle.fx * layout.cardW}
+                      y={layout.cardY + particle.fy * layout.cardH}
+                      dx={particle.dx}
+                      dy={particle.dy}
+                      r={particle.r}
+                      color={particle.color}
+                    />
+                  ))
+                : null}
+            </>
+          ) : (
+            <>
+              {/* Soft shadow under the fallback card */}
+              {layout.shadowW > 0 ? (
+                <Oval
+                  x={layout.shadowX}
+                  y={layout.shadowY}
+                  width={layout.shadowW}
+                  height={layout.shadowH}
+                  color="rgba(0,0,0,0.16)"
+                >
+                  <Blur blur={18} />
+                </Oval>
+              ) : null}
+              <Group>
+                <RoundedRect
+                  x={layout.cardX}
+                  y={layout.cardY}
+                  width={layout.cardW}
+                  height={layout.cardH}
+                  r={CARD_RADIUS}
+                  color="#FFFFFF"
+                />
+                {/* Honest photo preview, not a cutout: cover-style crop so the
+                    photo fills the whole card instead of a narrow contained
+                    strip. Aspect ratio is preserved by fit="cover". */}
+                {photoImage ? (
+                  <Group
+                    clip={rrect(
+                      rect(
+                        layout.cardX,
+                        layout.cardY,
+                        layout.cardW,
+                        layout.cardH,
+                      ),
+                      CARD_RADIUS,
+                      CARD_RADIUS,
+                    )}
+                  >
+                    <Image
+                      image={photoImage}
+                      x={layout.cardX}
+                      y={layout.cardY}
+                      width={layout.cardW}
+                      height={layout.cardH}
+                      fit="cover"
+                    />
+                  </Group>
+                ) : null}
+              </Group>
+            </>
           )}
         </Canvas>
       </View>
@@ -190,6 +336,46 @@ export function SkiaCutoutStage({
       </Animated.View>
     </View>
   );
+}
+
+/**
+ * A single dust fragment of the reveal: ramps in quickly, drifts outward
+ * with an ease-out curve, and fades to zero by the end of the reveal —
+ * nothing keeps animating on the stable cutout.
+ */
+function RevealParticle({
+  progress,
+  x,
+  y,
+  dx,
+  dy,
+  r,
+  color,
+}: {
+  progress: SharedValue<number>;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  r: number;
+  color: string;
+}) {
+  const cx = useDerivedValue(() => {
+    const p = progress.value;
+    const eased = 1 - (1 - p) * (1 - p);
+    return x + dx * eased;
+  });
+  const cy = useDerivedValue(() => {
+    const p = progress.value;
+    const eased = 1 - (1 - p) * (1 - p);
+    return y + dy * eased - 24 * p;
+  });
+  const opacity = useDerivedValue(() => {
+    const p = progress.value;
+    return Math.min(1, p * 5) * (1 - p) * 0.9;
+  });
+
+  return <Circle cx={cx} cy={cy} r={r} color={color} opacity={opacity} />;
 }
 
 type Layout = {
@@ -256,53 +442,31 @@ function computeLayout(size: StageSize, useRealCutout: boolean): Layout {
   const objX = (w - objW) / 2;
   const objY = cy - objH / 2;
 
-  // Shadow (soft ellipse below the object)
+  // Shadow (soft ellipse below the object or the fallback card)
   const shadowW = w * 0.5;
   const shadowH = 26;
   const shadowX = (w - shadowW) / 2;
-  const shadowY = objY + objH - 6;
 
-  // Photo fallback card: wide preview that fills the card (cover crop),
-  // no narrow vertical strip inside a big white rectangle.
+  // Photo card: also used as the dissolving source during the reveal, so
+  // it is always computed (wide cover crop, no narrow vertical strip).
   const cardW = Math.min(w * 0.86, 380);
   const cardH = Math.min(Math.max(250, h * 0.5), 320, h * 0.75);
   const cardX = (w - cardW) / 2;
   const cardY = cy - cardH / 2;
-
-  if (useRealCutout) {
-    return {
-      dots,
-      glowCx: cx,
-      glowCy,
-      glowR,
-      shadowX,
-      shadowY,
-      shadowW,
-      shadowH,
-      objX,
-      objY,
-      objW,
-      objH,
-      cardX: 0,
-      cardY: 0,
-      cardW: 0,
-      cardH: 0,
-    };
-  }
 
   return {
     dots,
     glowCx: cx,
     glowCy,
     glowR,
-    shadowX: (w - shadowW) / 2,
-    shadowY: cardY + cardH - 8,
+    shadowX,
+    shadowY: useRealCutout ? objY + objH - 6 : cardY + cardH - 8,
     shadowW,
     shadowH,
-    objX: 0,
-    objY: 0,
-    objW: 0,
-    objH: 0,
+    objX,
+    objY,
+    objW,
+    objH,
     cardX,
     cardY,
     cardW,

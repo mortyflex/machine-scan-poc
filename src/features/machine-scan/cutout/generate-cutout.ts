@@ -1,4 +1,5 @@
-import { getCutoutConfig, isDevBuild } from './cutout-config';
+import { getCutoutConfig } from './cutout-config';
+import { logCutoutDebug, warnCutoutDebug } from './cutout-debug';
 import type { CutoutResult } from './types';
 
 export async function generateMachineCutout(
@@ -6,15 +7,13 @@ export async function generateMachineCutout(
 ): Promise<CutoutResult> {
   const config = getCutoutConfig();
 
-  if (isDevBuild) {
-    console.info('[cutout] generateMachineCutout:start', {
-      hasImageUri: Boolean(imageUri),
-      provider: config.provider,
-      apiBaseUrl: config.apiBaseUrl,
-      rawProvider: config.rawProvider,
-      rawApiBaseUrl: config.rawApiBaseUrl,
-    });
-  }
+  logCutoutDebug('[cutout] generateMachineCutout:start', {
+    hasImageUri: Boolean(imageUri),
+    provider: config.provider,
+    apiBaseUrl: config.apiBaseUrl,
+    rawProvider: config.rawProvider,
+    rawApiBaseUrl: config.rawApiBaseUrl,
+  });
 
   if (!imageUri || imageUri.trim().length === 0) {
     return {
@@ -27,12 +26,10 @@ export async function generateMachineCutout(
   }
 
   if (config.provider !== 'remote') {
-    if (isDevBuild) {
-      console.warn('[cutout] disabled', {
-        rawProvider: config.rawProvider,
-        rawApiBaseUrl: config.rawApiBaseUrl,
-      });
-    }
+    warnCutoutDebug('[cutout] disabled', {
+      rawProvider: config.rawProvider,
+      rawApiBaseUrl: config.rawApiBaseUrl,
+    });
     return {
       ok: false,
       error: {
@@ -43,12 +40,10 @@ export async function generateMachineCutout(
   }
 
   if (!config.apiBaseUrl) {
-    if (isDevBuild) {
-      console.warn('[cutout] remote:error', {
-        kind: 'invalid_input',
-        message: 'Missing EXPO_PUBLIC_API_BASE_URL',
-      });
-    }
+    warnCutoutDebug('[cutout] remote:error', {
+      kind: 'invalid_input',
+      message: 'Missing EXPO_PUBLIC_API_BASE_URL',
+    });
     return {
       ok: false,
       error: {
@@ -58,9 +53,7 @@ export async function generateMachineCutout(
     };
   }
 
-  if (isDevBuild) {
-    console.info('[cutout] remote provider selected');
-  }
+  logCutoutDebug('[cutout] remote provider selected');
 
   // Lazy import: only load the (expo-file-system dependent) provider when the
   // remote cutout provider is actually enabled. Keeps tests runnable in

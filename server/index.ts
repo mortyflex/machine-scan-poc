@@ -82,12 +82,6 @@ async function handleCutout(
     return;
   }
 
-  console.log('[cutout-server] request parsed', {
-    mimeType,
-    imageBase64Length: imageBase64.length,
-    provider: getActiveProvider(),
-  });
-
   const result = await generateServerCutout({ imageBase64, mimeType });
 
   if (!result.ok) {
@@ -113,11 +107,6 @@ async function handleCutout(
     return;
   }
 
-  console.log('[cutout-server] cutout result', {
-    ok: true,
-    statusCode: 200,
-    durationMs: Date.now() - startedAt,
-  });
   end(200, {
     cutoutBase64: result.data.cutoutBase64,
     mimeType: result.data.mimeType,

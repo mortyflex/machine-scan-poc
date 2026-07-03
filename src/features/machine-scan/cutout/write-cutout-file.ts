@@ -1,4 +1,4 @@
-import { isDevBuild } from './cutout-config';
+import { logCutoutDebug, warnCutoutDebug } from './cutout-debug';
 
 export type WriteCutoutFileResult =
   | {
@@ -108,22 +108,18 @@ export async function writeCutoutBase64ToFile(params: {
     };
   }
 
-  if (isDevBuild) {
-    console.info('[cutout] local-write:start', {
-      mimeType: params.mimeType,
-      base64Length: rawBase64.length,
-    });
-  }
+  logCutoutDebug('[cutout] local-write:start', {
+    mimeType: params.mimeType,
+    base64Length: rawBase64.length,
+  });
 
   const bytes = decodeBase64ToBytes(rawBase64);
   if (!bytes || bytes.length === 0) {
-    if (isDevBuild) {
-      console.warn('[cutout] local-write:error', {
-        message: 'Le contenu base64 du cutout est invalide.',
-        causeName: 'InvalidBase64',
-        causeMessage: `base64Length=${rawBase64.length}`,
-      });
-    }
+    warnCutoutDebug('[cutout] local-write:error', {
+      message: 'Le contenu base64 du cutout est invalide.',
+      causeName: 'InvalidBase64',
+      causeMessage: `base64Length=${rawBase64.length}`,
+    });
     return {
       ok: false,
       error: {
@@ -140,12 +136,10 @@ export async function writeCutoutBase64ToFile(params: {
     if (!directory.exists) {
       directory.create({ intermediates: true });
     }
-    if (isDevBuild) {
-      console.info('[cutout] local-write:directory', {
-        directoryUri: directory.uri,
-        exists: directory.exists,
-      });
-    }
+    logCutoutDebug('[cutout] local-write:directory', {
+      directoryUri: directory.uri,
+      exists: directory.exists,
+    });
 
     const file = new File(directory, createCutoutFileName(params.mimeType));
     // Explicit create: File.write on a non-existent file is the suspected
@@ -153,22 +147,20 @@ export async function writeCutoutBase64ToFile(params: {
     file.create({ intermediates: true, overwrite: true });
     file.write(bytes);
 
-    if (isDevBuild) {
-      let exists: boolean | undefined;
-      let size: number | undefined;
-      try {
-        exists = file.exists;
-        size = file.size;
-      } catch {
-        // Verification is best-effort only; never block a successful write.
-      }
-      console.info('[cutout] local-write:success', {
-        cutoutUri: file.uri,
-        exists,
-        size,
-        expectedSize: bytes.length,
-      });
+    let exists: boolean | undefined;
+    let size: number | undefined;
+    try {
+      exists = file.exists;
+      size = file.size;
+    } catch {
+      // Verification is best-effort only; never block a successful write.
     }
+    logCutoutDebug('[cutout] local-write:success', {
+      cutoutUri: file.uri,
+      exists,
+      size,
+      expectedSize: bytes.length,
+    });
 
     return { ok: true, data: { cutoutUri: file.uri } };
   } catch (error) {
@@ -176,13 +168,11 @@ export async function writeCutoutBase64ToFile(params: {
     const causeMessage = (
       error instanceof Error ? error.message : String(error)
     ).slice(0, 300);
-    if (isDevBuild) {
-      console.warn('[cutout] local-write:error', {
-        message: "L'écriture du fichier cutout a échoué.",
-        causeName,
-        causeMessage,
-      });
-    }
+    warnCutoutDebug('[cutout] local-write:error', {
+      message: "L'écriture du fichier cutout a échoué.",
+      causeName,
+      causeMessage,
+    });
     return {
       ok: false,
       error: {

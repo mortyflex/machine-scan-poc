@@ -278,6 +278,35 @@ Automated (`src/features/machine-scan/cutout/write-cutout-file.test.ts`):
 - `writeCutoutBase64ToFile` returns `invalid_input` for empty or invalid
   base64 without touching the filesystem.
 
+### Cutout UX Polish (Phase 6.6.4)
+
+Manual (physical iPhone, Expo Go, remote provider):
+
+- No debug panel is visible anywhere in the scan flow (it is disabled by
+  default behind `SHOW_CUTOUT_DEBUG_PANEL`; flip the flag in
+  `src/features/machine-scan/cutout/cutout-debug.ts` to re-enable in dev).
+- During `Analyse de la machine…` / `Détourage de l'objet…`: the photo
+  card shows a subtle diagonal shimmer and a few slow sparkles — smooth,
+  not flashy, no aggressive blinking.
+- When the cutout arrives: the photo background dissolves with a short
+  dust-particle transition (~0.9 s, plays once), the detoured object
+  fades in and settles with glow + shadow.
+- The cutout has a subtle white sticker-style contour following its
+  silhouette — no big halo, no rectangle border.
+- After the reveal, nothing keeps animating (no infinite particles).
+- Metro console stays quiet on success (verbose logs gated); errors still
+  log safely in dev.
+- Fallback: stop the server and scan — clean wide photo fallback +
+  `Détourage indisponible`, no crash, actions work.
+- Details / save / saved list / saved detail unchanged and functional.
+
+Automated (`src/features/machine-scan/cutout/cutout-debug.test.ts`):
+
+- `CUTOUT_DEBUG_LOGS_ENABLED` and `SHOW_CUTOUT_DEBUG_PANEL` are false by
+  default.
+- `logCutoutDebug` stays silent when the flag is off.
+- `warnCutoutDebug` stays silent outside dev builds.
+
 Manual visual consistency (no `cutoutUri`):
 
 - Recognition loading, `Détourage de l'objet…` loading, validation

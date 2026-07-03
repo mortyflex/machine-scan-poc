@@ -1,4 +1,8 @@
 export {
+  CutoutAnalysisEffect,
+  type CutoutAnalysisEffectProps,
+} from './CutoutAnalysisEffect';
+export {
   CutoutDebugPanel,
   type CutoutDebugPanelProps,
   type CutoutDebugStatus,

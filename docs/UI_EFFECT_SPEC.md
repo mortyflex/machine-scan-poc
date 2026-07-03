@@ -408,6 +408,83 @@ else:
 - The dev debug panel reports `visual mode: photo-fallback-cover` for
   every no-cutout state (loading included).
 
+## Phase 6.6.4 — Cutout UX polish and debug cleanup
+
+QA decision:
+
+- remote cutout pipeline is validated on iPhone
+- debug panel is no longer needed in normal UI
+- loading state should feel intentional and premium
+- added analysis sparkle effect while cutout is being generated
+- added reveal transition from photo fallback to real cutout
+- added subtle sticker-style border/glow for real cutout
+
+### Debug cleanup
+
+- `CutoutDebugPanel` stays in the codebase but is disabled by default:
+  `SHOW_CUTOUT_DEBUG_PANEL = false` in
+  `src/features/machine-scan/cutout/cutout-debug.ts` (dev-only even when
+  re-enabled).
+- Verbose pipeline success logs are gated behind
+  `CUTOUT_DEBUG_LOGS_ENABLED = false` (`logCutoutDebug`); error logs stay
+  dev-only via `warnCutoutDebug`. Never base64, never secrets.
+- Normal UI shows only product texts: `Analyse de la machine…`,
+  `Détourage de l'objet…`, `Détourage indisponible`.
+
+### Analysis effect (`CutoutAnalysisEffect`)
+
+During recognition and cutout loading:
+
+```txt
+cover-style photo card (PhotoFallbackCard)
++ subtle diagonal shimmer band (Skia LinearGradient, ~2.6 s loop)
++ 12 deterministic sparkles (white / pale yellow, r 1.2–2.4,
+  slow sine opacity + tiny vertical drift, no aggressive blinking)
++ spinner + short label below
+```
+
+Driven by a single Skia `useClock`; sparkle positions are a fixed table
+(no random per render). The overlay unmounts with the loading stage, so
+nothing keeps animating afterwards.
+
+### Reveal transition (in `SkiaCutoutStage`)
+
+When `cutoutUri` becomes displayable (image decoded), a one-shot ~900 ms
+reveal plays (Reanimated `withTiming`, ease-out cubic):
+
+```txt
+photo card (cover) visible
+→ card + photo dissolve (opacity 1 → 0 over the first ~55%)
+→ 14 deterministic dust fragments ramp in, drift outward/upward with
+  ease-out, and fade to zero (Telegram-style dust, sober off-white)
+→ cutout layer fades in (25%→75% of the timeline) with a slight
+  translateY settle (14 → 0)
+→ stable end state: cutout + glow + soft shadow, no looping particles
+```
+
+- Plays exactly once per stage mount (`hasRevealed` ref); if the cutout
+  is already available on mount, the same short reveal plays from the
+  photo card — never an infinite loop.
+- Without `cutoutUri` the progress stays at 0 and the honest cover
+  fallback renders exactly as in Phase 6.6.2, with
+  `Détourage indisponible`.
+
+### Sticker-style cutout
+
+The real cutout is drawn as a sticker:
+
+```txt
+white silhouette copies (BlendColor srcIn, rgba(255,255,255,0.85))
+at offsets (±1.5, 0), (0, ±1.5), (±1, ±1) behind the image
+→ subtle contour hugging the PNG alpha
++ soft yellow radial glow behind
++ soft elliptical shadow below
++ sharp cutout on top
+```
+
+No huge halo, no rectangle border; the contour follows the silhouette
+because it reuses the cutout's own alpha channel.
+
 
 
 

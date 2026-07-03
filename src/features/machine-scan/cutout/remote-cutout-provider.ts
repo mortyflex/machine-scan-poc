@@ -1,7 +1,8 @@
 import { File } from 'expo-file-system';
 import { z } from 'zod';
 
-import { isDevBuild, type MobileCutoutConfig } from './cutout-config';
+import type { MobileCutoutConfig } from './cutout-config';
+import { logCutoutDebug, warnCutoutDebug } from './cutout-debug';
 import type { CutoutError, CutoutErrorKind, CutoutResult } from './types';
 import { writeCutoutBase64ToFile } from './write-cutout-file';
 
@@ -35,15 +36,13 @@ function failure(
   cause?: unknown,
   details?: ProviderErrorDetails,
 ): CutoutResult {
-  if (isDevBuild) {
-    console.warn('[cutout] remote:error', {
-      kind,
-      message,
-      providerStatus: details?.providerStatus,
-      providerMessage: details?.providerMessage,
-      debugMessage: details?.debugMessage,
-    });
-  }
+  warnCutoutDebug('[cutout] remote:error', {
+    kind,
+    message,
+    providerStatus: details?.providerStatus,
+    providerMessage: details?.providerMessage,
+    debugMessage: details?.debugMessage,
+  });
   const error: CutoutError = { kind, message };
   if (cause !== undefined) error.cause = cause;
   if (details?.providerStatus !== undefined) {
@@ -93,13 +92,11 @@ export async function requestRemoteCutout(
     );
   }
 
-  if (isDevBuild) {
-    // Never log the base64 payload itself — only the target and the source.
-    console.info('[cutout] remote:request:start', {
-      url,
-      imageUriPrefix: imageUri.slice(0, 32),
-    });
-  }
+  // Never log the base64 payload itself — only the target and the source.
+  logCutoutDebug('[cutout] remote:request:start', {
+    url,
+    imageUriPrefix: imageUri.slice(0, 32),
+  });
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -125,12 +122,10 @@ export async function requestRemoteCutout(
     clearTimeout(timeout);
   }
 
-  if (isDevBuild) {
-    console.info('[cutout] remote:response', {
-      status: response.status,
-      ok: response.ok,
-    });
-  }
+  logCutoutDebug('[cutout] remote:response', {
+    status: response.status,
+    ok: response.ok,
+  });
 
   if (!response.ok) {
     const errorBody = await response

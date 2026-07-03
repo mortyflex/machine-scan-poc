@@ -1,9 +1,12 @@
 import { Image } from 'expo-image';
+import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 export type PhotoFallbackCardProps = {
   imageUri: string;
   variant?: 'loading' | 'validation' | 'details';
+  /** Optional overlay rendered above the photo, clipped by the card. */
+  children?: ReactNode;
 };
 
 /**
@@ -16,6 +19,7 @@ export type PhotoFallbackCardProps = {
 export function PhotoFallbackCard({
   imageUri,
   variant = 'validation',
+  children,
 }: PhotoFallbackCardProps) {
   return (
     <View style={[styles.card, variantStyles[variant]]}>
@@ -25,6 +29,7 @@ export function PhotoFallbackCard({
         contentFit="cover"
         transition={150}
       />
+      {children}
     </View>
   );
 }

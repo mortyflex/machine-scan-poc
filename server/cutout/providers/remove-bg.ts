@@ -23,10 +23,9 @@ function toSafePreview(text: string): string {
 export async function removeBgCutout(
   request: CutoutRequest,
 ): Promise<ServerCutoutResult> {
-  console.log('[remove-bg] provider start');
   const apiKey = process.env.REMOVE_BG_API_KEY;
-  console.log('[remove-bg] hasApiKey', Boolean(apiKey));
-  console.log('[remove-bg] input', {
+  console.log('[remove-bg] request', {
+    hasApiKey: Boolean(apiKey),
     mimeType: request.mimeType,
     imageBase64Length: request.imageBase64.length,
   });
@@ -46,7 +45,6 @@ export async function removeBgCutout(
     };
   }
 
-  console.log('[remove-bg] request start');
   let response: Response;
   try {
     response = await fetch(REMOVE_BG_ENDPOINT, {

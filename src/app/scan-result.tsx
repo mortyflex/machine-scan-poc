@@ -7,11 +7,13 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { recognizeMachine } from '@/features/machine-scan/api';
 import type { RecognitionErrorKind } from '@/features/machine-scan/api';
 import {
+  SHOW_CUTOUT_DEBUG_PANEL,
   generateMachineCutout,
   getCutoutConfig,
 } from '@/features/machine-scan/cutout';
 import type { CutoutErrorKind } from '@/features/machine-scan/cutout';
 import {
+  CutoutAnalysisEffect,
   CutoutDebugPanel,
   MachineResultCard,
   PhotoFallbackCard,
@@ -172,9 +174,10 @@ export default function ScanResultScreen() {
   const cutoutUri =
     cutoutState.status === 'ready' ? cutoutState.cutoutUri : undefined;
 
-  // Dev-only diagnostic overlay (Phase 6.6.1): confirms on-device whether
-  // the env vars are read and whether the backend request actually fires.
-  const debugPanel = __DEV__ ? (
+  // Diagnostic overlay (Phase 6.6.1), disabled by default since the remote
+  // pipeline was validated on device (Phase 6.6.4). Flip
+  // SHOW_CUTOUT_DEBUG_PANEL in cutout-debug.ts to re-enable in dev.
+  const debugPanel = __DEV__ && SHOW_CUTOUT_DEBUG_PANEL ? (
     <CutoutDebugPanel
       provider={cutoutConfig.provider}
       apiBaseUrl={cutoutConfig.apiBaseUrl}
@@ -267,7 +270,7 @@ function LoadingStage({
   return (
     <Screen style={styles.lightStage}>
       <View style={styles.loadingBody}>
-        <PhotoFallbackCard imageUri={imageUri} variant="loading" />
+        <CutoutAnalysisEffect imageUri={imageUri} />
         <ActivityIndicator color="#6B6B6B" size="small" />
         <AppText variant="body" color="textSecondary" align="center">
           {label}

@@ -125,6 +125,37 @@ Delivered:
   in the dev debug panel.
 - Pure helpers unit-tested in Node (`write-cutout-file.test.ts`).
 
+## Phase 6.6.4 — Cutout UX polish and debug cleanup
+
+Status: DONE (pending iPhone visual QA)
+
+QA decision:
+
+- remote cutout pipeline is validated on iPhone
+- debug panel is no longer needed in normal UI
+- loading state should feel intentional and premium
+- added analysis sparkle effect while cutout is being generated
+- added reveal transition from photo fallback to real cutout
+- added subtle sticker-style border/glow for real cutout
+
+Delivered:
+
+- `CutoutDebugPanel` disabled by default behind
+  `SHOW_CUTOUT_DEBUG_PANEL = false` (cutout-debug.ts); verbose mobile
+  success logs gated behind `CUTOUT_DEBUG_LOGS_ENABLED = false`
+  (`logCutoutDebug`); error logs stay dev-only (`warnCutoutDebug`).
+- Server logs trimmed to: listening / provider, POST start/end with
+  duration, grouped remove.bg request/response, failures with safe
+  preview.
+- `CutoutAnalysisEffect`: cover photo card + subtle diagonal shimmer +
+  12 slow deterministic sparkles during recognition and cutout loading.
+- One-shot dust reveal in `SkiaCutoutStage`: the photo card dissolves,
+  14 deterministic fragments drift away, and the cutout fades in
+  (~900 ms, plays once, nothing loops after).
+- Sticker-style cutout: white silhouette offsets behind the PNG alpha +
+  existing glow and soft shadow.
+- Fallback (no cutout), details/save/saved flows unchanged.
+
 Next phase:
 
 ```txt
