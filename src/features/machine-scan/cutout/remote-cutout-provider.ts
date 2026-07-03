@@ -18,19 +18,38 @@ const remoteErrorResponseSchema = z.object({
   error: z.object({
     kind: z.string(),
     message: z.string(),
+    providerStatus: z.number().optional(),
+    providerMessage: z.string().optional(),
   }),
 });
+
+type ProviderErrorDetails = {
+  providerStatus?: number;
+  providerMessage?: string;
+};
 
 function failure(
   kind: CutoutErrorKind,
   message: string,
   cause?: unknown,
+  details?: ProviderErrorDetails,
 ): CutoutResult {
   if (isDevBuild) {
-    console.warn('[cutout] remote:error', { kind, message });
+    console.warn('[cutout] remote:error', {
+      kind,
+      message,
+      providerStatus: details?.providerStatus,
+      providerMessage: details?.providerMessage,
+    });
   }
   const error: CutoutError = { kind, message };
   if (cause !== undefined) error.cause = cause;
+  if (details?.providerStatus !== undefined) {
+    error.providerStatus = details.providerStatus;
+  }
+  if (details?.providerMessage) {
+    error.providerMessage = details.providerMessage.slice(0, 300);
+  }
   return { ok: false, error };
 }
 
@@ -113,7 +132,8 @@ export async function requestRemoteCutout(
       .json()
       .then((body) => remoteErrorResponseSchema.safeParse(body))
       .catch(() => null);
-    if (errorBody?.success && errorBody.data.error.kind === 'cutout_disabled') {
+    const serverError = errorBody?.success ? errorBody.data.error : undefined;
+    if (serverError?.kind === 'cutout_disabled') {
       return failure(
         'cutout_unavailable',
         'Le détourage est désactivé côté serveur.',
@@ -122,7 +142,11 @@ export async function requestRemoteCutout(
     return failure(
       'cutout_failed',
       `Le backend a renvoyé le statut ${response.status}.`,
-      errorBody?.success ? errorBody.data.error : undefined,
+      serverError,
+      {
+        providerStatus: serverError?.providerStatus,
+        providerMessage: serverError?.providerMessage,
+      },
     );
   }
 

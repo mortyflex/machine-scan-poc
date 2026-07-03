@@ -12,6 +12,10 @@ export {
 } from './MachineRevealEffect';
 export { MuscleTags, type MuscleTagsProps } from './MuscleTags';
 export {
+  PhotoFallbackCard,
+  type PhotoFallbackCardProps,
+} from './PhotoFallbackCard';
+export {
   RecognitionConfidence,
   type RecognitionConfidenceProps,
 } from './RecognitionConfidence';

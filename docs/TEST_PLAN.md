@@ -212,6 +212,48 @@ Manual (physical iPhone, Expo Go, dev build):
   `Détourage indisponible` hint; the panel shows
   `visual mode: photo-fallback-cover`.
 
+### Backend Cutout Diagnostics (Phase 6.6.2)
+
+QA finding:
+
+- mobile app reads remote env correctly
+- mobile app reaches backend (`POST /api/machine-cutout` logged)
+- backend did not expose enough safe diagnostics for remove.bg failures
+- loading state still displayed a narrow vertical photo inside a white card
+- added backend provider logs, safe debug endpoint, provider status
+  propagation, and shared wide cover-style no-cutout photo fallback
+
+Manual (server terminal, during a scan):
+
+- `GET /api/machine-cutout/debug` returns
+  `{ ok, provider, hasRemoveBgApiKey, nodeVersion, runtime }` — never the
+  key value.
+- During a scan, the terminal shows the full lifecycle:
+  `POST /api/machine-cutout start` → `request parsed` (mimeType, base64
+  length, provider) → `[remove-bg]` provider logs (hasApiKey, input,
+  response status/content-type, success or ≤300-char failure preview) →
+  `cutout result` → `end` (statusCode, durationMs).
+- On failure, the mobile debug panel shows `provider status` and a safe
+  `provider message` preview.
+- No log line ever contains the API key or the full base64 payload.
+- Local pipeline test without the app:
+  `npx tsx server/scripts/test-cutout.ts ./photo.jpg` (writes the
+  git-ignored `tmp-cutout-test.png` on success).
+
+Automated (`server/cutout/cutout-service.test.ts`):
+
+- empty `imageBase64` → `invalid_input`.
+- no `CUTOUT_PROVIDER` → `cutout_disabled`.
+- `remove-bg` without `REMOVE_BG_API_KEY` → `provider_error`.
+- debug info reports `hasRemoveBgApiKey` without exposing the key value.
+
+Manual visual consistency (no `cutoutUri`):
+
+- Recognition loading, `Détourage de l'objet…` loading, validation
+  fallback, details fallback, and saved detail fallback all show a wide
+  cover-style photo filling the white card — no narrow vertical photo in
+  a large white rectangle anywhere.
+
 Automated (`src/features/machine-scan/storage/mapping.test.ts` additions):
 
 - row `cutoutUri` is preserved through `mapRowToMachineScan`.

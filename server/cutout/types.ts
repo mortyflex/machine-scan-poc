@@ -20,6 +20,10 @@ export type ServerCutoutResult =
       error: {
         kind: ServerCutoutErrorKind;
         message: string;
+        /** HTTP status returned by the external provider, when known. */
+        providerStatus?: number;
+        /** Safe preview (≤300 chars) of the provider error body. Never contains secrets. */
+        providerMessage?: string;
         cause?: unknown;
       };
     };

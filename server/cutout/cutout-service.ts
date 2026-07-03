@@ -7,10 +7,28 @@ import {
   type ServerCutoutResult,
 } from './types';
 
-const provider = resolveServerProvider();
-
 export function getActiveProvider(): ServerCutoutProvider {
-  return provider;
+  return resolveServerProvider();
+}
+
+/**
+ * Safe diagnostic payload for `GET /api/machine-cutout/debug`. Reports
+ * whether the secret key is loaded without ever exposing its value.
+ */
+export function getCutoutDebugInfo(): {
+  ok: true;
+  provider: ServerCutoutProvider;
+  hasRemoveBgApiKey: boolean;
+  nodeVersion: string;
+  runtime: 'node';
+} {
+  return {
+    ok: true,
+    provider: resolveServerProvider(),
+    hasRemoveBgApiKey: Boolean(process.env.REMOVE_BG_API_KEY),
+    nodeVersion: process.version,
+    runtime: 'node',
+  };
 }
 
 export async function generateServerCutout(
@@ -26,7 +44,7 @@ export async function generateServerCutout(
     };
   }
 
-  switch (provider) {
+  switch (resolveServerProvider()) {
     case 'remove-bg':
       return removeBgCutout(request);
     case 'disabled':

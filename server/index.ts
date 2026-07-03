@@ -6,6 +6,7 @@ import { createServer } from 'node:http';
 import {
   generateServerCutout,
   getActiveProvider,
+  getCutoutDebugInfo,
 } from './cutout/cutout-service';
 import type { ServerCutoutErrorKind } from './cutout/types';
 
@@ -42,10 +43,20 @@ async function handleCutout(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
-  console.log('[cutout-server] POST /api/machine-cutout');
+  const startedAt = Date.now();
+  console.log('[cutout-server] POST /api/machine-cutout start');
+
+  const end = (statusCode: number, body: unknown): void => {
+    console.log('[cutout-server] POST /api/machine-cutout end', {
+      statusCode,
+      durationMs: Date.now() - startedAt,
+    });
+    sendJson(res, statusCode, body);
+  };
+
   const rawBody = await readBody(req);
   if (rawBody === null) {
-    sendJson(res, 413, {
+    end(413, {
       error: { kind: 'invalid_input', message: 'Request body too large.' },
     });
     return;
@@ -65,26 +76,49 @@ async function handleCutout(
       }
     }
   } catch {
-    sendJson(res, 400, {
+    end(400, {
       error: { kind: 'invalid_input', message: 'Body must be valid JSON.' },
     });
     return;
   }
 
+  console.log('[cutout-server] request parsed', {
+    mimeType,
+    imageBase64Length: imageBase64.length,
+    provider: getActiveProvider(),
+  });
+
   const result = await generateServerCutout({ imageBase64, mimeType });
 
   if (!result.ok) {
-    const status = ERROR_STATUS[result.error.kind] ?? 502;
-    console.warn(
-      `[machine-scan server] cutout error: ${result.error.kind} — ${result.error.message}`,
-    );
-    sendJson(res, status, {
-      error: { kind: result.error.kind, message: result.error.message },
+    const statusCode = ERROR_STATUS[result.error.kind] ?? 502;
+    console.warn('[cutout-server] cutout result', {
+      ok: false,
+      errorKind: result.error.kind,
+      statusCode,
+      durationMs: Date.now() - startedAt,
+    });
+    end(statusCode, {
+      error: {
+        kind: result.error.kind,
+        message: result.error.message,
+        ...(result.error.providerStatus !== undefined
+          ? { providerStatus: result.error.providerStatus }
+          : {}),
+        ...(result.error.providerMessage
+          ? { providerMessage: result.error.providerMessage }
+          : {}),
+      },
     });
     return;
   }
 
-  sendJson(res, 200, {
+  console.log('[cutout-server] cutout result', {
+    ok: true,
+    statusCode: 200,
+    durationMs: Date.now() - startedAt,
+  });
+  end(200, {
     cutoutBase64: result.data.cutoutBase64,
     mimeType: result.data.mimeType,
     method: 'remote',
@@ -110,6 +144,11 @@ const server = createServer(async (req, res) => {
   try {
     if (url === '/api/machine-cutout' && req.method === 'POST') {
       await handleCutout(req, res);
+      return;
+    }
+    if (url === '/api/machine-cutout/debug' && req.method === 'GET') {
+      // Safe diagnostics: reports whether the key is loaded, never its value.
+      sendJson(res, 200, getCutoutDebugInfo());
       return;
     }
     if (url === '/health' && req.method === 'GET') {

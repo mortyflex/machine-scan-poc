@@ -14,6 +14,7 @@ import type { CutoutErrorKind } from '@/features/machine-scan/cutout';
 import {
   CutoutDebugPanel,
   MachineResultCard,
+  PhotoFallbackCard,
   ScanValidationStage,
 } from '@/features/machine-scan/components';
 import type { CutoutDebugStatus } from '@/features/machine-scan/components';
@@ -44,7 +45,12 @@ type CutoutState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'ready'; cutoutUri: string }
-  | { status: 'failed'; errorKind: CutoutErrorKind };
+  | {
+      status: 'failed';
+      errorKind: CutoutErrorKind;
+      providerStatus?: number;
+      providerMessage?: string;
+    };
 
 const ERROR_MESSAGES: Record<RecognitionErrorKind, string> = {
   missing_image:
@@ -118,7 +124,12 @@ export default function ScanResultScreen() {
         if (result.ok) {
           setCutoutState({ status: 'ready', cutoutUri: result.data.cutoutUri });
         } else {
-          setCutoutState({ status: 'failed', errorKind: result.error.kind });
+          setCutoutState({
+            status: 'failed',
+            errorKind: result.error.kind,
+            providerStatus: result.error.providerStatus,
+            providerMessage: result.error.providerMessage,
+          });
         }
       })
       .catch(() => {
@@ -168,6 +179,14 @@ export default function ScanResultScreen() {
       status={toCutoutDebugStatus(cutoutState)}
       errorKind={
         cutoutState.status === 'failed' ? cutoutState.errorKind : undefined
+      }
+      providerStatus={
+        cutoutState.status === 'failed' ? cutoutState.providerStatus : undefined
+      }
+      providerMessage={
+        cutoutState.status === 'failed'
+          ? cutoutState.providerMessage
+          : undefined
       }
       visualMode={cutoutUri ? 'real-cutout' : 'photo-fallback-cover'}
       onRetry={() => setCutoutAttempt((attempt) => attempt + 1)}
@@ -241,13 +260,7 @@ function LoadingStage({
   return (
     <Screen style={styles.lightStage}>
       <View style={styles.loadingBody}>
-        <View style={styles.loadingCard}>
-          <Image
-            source={{ uri: imageUri }}
-            style={styles.loadingPhoto}
-            contentFit="contain"
-          />
-        </View>
+        <PhotoFallbackCard imageUri={imageUri} variant="loading" />
         <ActivityIndicator color="#6B6B6B" size="small" />
         <AppText variant="body" color="textSecondary" align="center">
           {label}
@@ -325,15 +338,7 @@ function DetailsVisual({
       </View>
     );
   }
-  return (
-    <View style={styles.detailsPhotoCard}>
-      <Image
-        source={{ uri: imageUri }}
-        style={styles.detailsPhoto}
-        contentFit="contain"
-      />
-    </View>
-  );
+  return <PhotoFallbackCard imageUri={imageUri} variant="details" />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -460,28 +465,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingBody: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
-  },
-  loadingCard: {
-    width: '82%',
-    maxWidth: 340,
-    aspectRatio: 4 / 3,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 8,
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 6,
-  },
-  loadingPhoto: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 14,
   },
   scrollContent: {
     gap: spacing.md,
@@ -508,15 +494,6 @@ const styles = StyleSheet.create({
   detailsCutoutImage: {
     width: '100%',
     height: '100%',
-  },
-  detailsPhotoCard: {
-    backgroundColor: '#F8F8F5',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  detailsPhoto: {
-    width: '100%',
-    aspectRatio: 4 / 3,
   },
   actions: {
     gap: spacing.sm,

@@ -367,9 +367,46 @@ provider: <remote|disabled>
 api: <apiBaseUrl|empty>
 status: <idle|loading|success|failed|disabled>
 error: <kind|none>
+provider status: <externalHttpStatus>   (when available)
+provider message: <safe preview>        (when available)
 visual mode: <real-cutout|photo-fallback-cover>
 [Relancer le détourage]  (only when failed/disabled)
 ```
+
+## Phase 6.6.2 — Backend cutout diagnostics and no-cutout visual consistency
+
+QA finding:
+
+- mobile app reads remote env correctly
+- mobile app reaches backend (POST logged)
+- backend did not expose enough safe diagnostics for remove.bg failures
+- loading state still displayed a narrow vertical photo inside a white card
+- added backend provider logs, safe debug endpoint, provider status
+  propagation, and shared wide cover-style no-cutout photo fallback
+
+Unified no-cutout rule (all screens):
+
+```txt
+if cutoutUri exists:
+  render real transparent cutout (unchanged: glow, shadow, no card)
+
+else:
+  render PhotoFallbackCard — wide cover-style photo filling a premium
+  white card; aesthetic crop allowed; never presented as a cutout
+```
+
+`PhotoFallbackCard` (shared component):
+
+- White card, `overflow: hidden`, soft drop shadow, photo fills the card
+  with `contentFit="cover"` (no deformation, centered crop).
+- Variants: `loading` / `validation` (width 86%, max 380, height 280,
+  radius 30) and `details` (full width, height 280, radius 24).
+- Used by: recognition loading, cutout loading (`Détourage de l'objet…`),
+  details fallback, saved detail fallback. The Skia validation fallback
+  keeps its own equivalent cover-crop rendering (Phase 6.6.1). Saved list
+  keeps its small cover thumbnail.
+- The dev debug panel reports `visual mode: photo-fallback-cover` for
+  every no-cutout state (loading included).
 
 
 

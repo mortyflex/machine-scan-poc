@@ -34,6 +34,9 @@ yarn-error.*
 .env
 .env*.local
 
+# local cutout test artifacts
+tmp-cutout-test.png
+
 # typescript
 *.tsbuildinfo
 .test-build/

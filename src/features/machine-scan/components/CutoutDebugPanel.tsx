@@ -12,6 +12,10 @@ export type CutoutDebugPanelProps = {
   apiBaseUrl: string;
   status: CutoutDebugStatus;
   errorKind?: string;
+  /** External provider HTTP status forwarded by the backend, if any. */
+  providerStatus?: number;
+  /** Safe preview of the provider error message (never a secret). */
+  providerMessage?: string;
   visualMode: 'real-cutout' | 'photo-fallback-cover';
   onRetry?: () => void;
   /** Extra bottom spacing so the panel doesn't cover action buttons. */
@@ -29,6 +33,8 @@ export function CutoutDebugPanel({
   apiBaseUrl,
   status,
   errorKind,
+  providerStatus,
+  providerMessage,
   visualMode,
   onRetry,
   bottomOffset = 8,
@@ -47,6 +53,14 @@ export function CutoutDebugPanel({
         <Text style={styles.line}>api: {apiBaseUrl || 'empty'}</Text>
         <Text style={styles.line}>status: {status}</Text>
         <Text style={styles.line}>error: {errorKind ?? 'none'}</Text>
+        {providerStatus !== undefined ? (
+          <Text style={styles.line}>provider status: {providerStatus}</Text>
+        ) : null}
+        {providerMessage ? (
+          <Text style={styles.line} numberOfLines={4}>
+            provider message: {providerMessage}
+          </Text>
+        ) : null}
         <Text style={styles.line}>visual mode: {visualMode}</Text>
         {canRetry ? (
           <Pressable onPress={onRetry} style={styles.retryButton}>

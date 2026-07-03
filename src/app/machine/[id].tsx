@@ -8,7 +8,10 @@ import {
   View,
 } from 'react-native';
 
-import { MachineResultCard } from '@/features/machine-scan/components';
+import {
+  MachineResultCard,
+  PhotoFallbackCard,
+} from '@/features/machine-scan/components';
 import {
   deleteMachineScan,
   getMachineScanById,
@@ -141,13 +144,7 @@ export default function MachineDetailScreen() {
             </View>
           </View>
         ) : (
-          <Card style={styles.imageCard}>
-            <Image
-              source={{ uri: scan.imageUri }}
-              style={styles.image}
-              contentFit="contain"
-            />
-          </Card>
+          <PhotoFallbackCard imageUri={scan.imageUri} variant="details" />
         )}
 
         <MachineResultCard
@@ -204,10 +201,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingVertical: spacing.md,
   },
-  imageCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
   cutoutStage: {
     backgroundColor: '#F8F8F5',
     borderRadius: 20,
@@ -226,11 +219,6 @@ const styles = StyleSheet.create({
   cutoutImage: {
     width: '100%',
     height: '100%',
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    backgroundColor: '#000',
   },
   actions: {
     gap: spacing.sm,
