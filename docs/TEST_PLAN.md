@@ -525,3 +525,32 @@ Manual QA on iPhone (required):
   unaffected by the background change.
 - Delete / back buttons unchanged and functional on the clean page.
 - Fallback and save/saved/delete flows intact.
+
+## Phase 6.6.10 — Global background cleanup and sticker title restoration
+
+QA finding:
+
+- previous fix removed too much of the sticker title effect
+- title should keep a sticker look with a larger, smoother white
+  border/backing
+- gray container backgrounds were still present outside details,
+  especially on saved machines
+- all card-based screens should use full-width white/premium backgrounds
+  and shadow-based cards
+- secondary menu screens need premium back navigation
+
+Manual QA on iPhone (required):
+
+- Machine title is a real sticker again: organic white die-cut backing
+  (two offset plates), chunky deep-blue title, smooth rounded edges,
+  zero pixelation, readable on two lines.
+- Saved machines list: full-width white dotted background, no gray
+  container, cards float with shadows, list scrolls (long lists were
+  previously cut off) without a visible scrollbar.
+- Saved machines header shows a premium round back button that returns
+  to home; "Scanner une machine" still works.
+- Saved detail shows a back button at the top returning to the list;
+  bottom "Retour à la liste" and "Supprimer cette machine" still work.
+- No gray container on scan-result details or saved detail either.
+- Confidence pill on saved cards is visible (cream) on the white card.
+- Save/saved/delete flows and fallback unchanged.

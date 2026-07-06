@@ -858,7 +858,7 @@ absolute children by the parent's padding — the source of the old
 centered gray rail
 ```
 
-Sticker title (supersedes the 6.6.9 outline approach):
+Sticker title (superseded by 6.6.10 below):
 
 ```txt
 no offset-text outline (it rendered jagged/pixelated)
@@ -867,4 +867,51 @@ padding 24×13, shadow 0.15 / radius 18 / y 10, tilt −1°
 title: Plus Jakarta Sans ExtraBold 26/32, #203040, 2 lines max
 subtitle inside the plate: Inter Medium 15, #5F6B78
 plate max width 94% of the hero title zone, centered, never clipped
+```
+
+## Phase 6.6.10 — Global background cleanup and sticker title restoration
+
+QA finding:
+
+- previous fix removed too much of the sticker title effect
+- title should keep a sticker look with a larger, smoother white
+  border/backing
+- gray container backgrounds were still present outside details,
+  especially on saved machines
+- all card-based screens should use full-width white/premium backgrounds
+  and shadow-based cards
+- secondary menu screens need premium back navigation
+
+Sticker title (current):
+
+```txt
+organic die-cut sticker, never pixelated:
+  wrap: max width 92%, tilt −1.2°
+  backing plate: white, radius 34, insets −12 h / −5 v, rotated +2.4°
+                 (corners peek out around the main plate = organic blob)
+  main plate: white, radius 26, padding 22×12, shadow 0.16/16/y10
+  title: Plus Jakarta Sans ExtraBold 28/33, #203040, 2 lines max,
+         soft white halo (textShadow radius 4)
+  subtitle inside: Inter Medium 15, #5F6B78
+used in the details hero (scan-result + saved detail); no duplication in
+the summary card; never shown over the photo fallback
+```
+
+Global background rule:
+
+```txt
+page: white + PremiumDottedBackground full-bleed (unpadded Screen)
+cards: white, shadow relief, no borders
+wrappers: transparent — no gray rail/container anywhere
+applies to: scan-result details, saved detail, saved machines list
+intentionally warm/dark elsewhere: validation stage (#F8F8F5), camera
+```
+
+Back navigation (`BackButton`):
+
+```txt
+white circle 44 px (pill with label), chevron-back, shadow 0.10/12/y6,
+press scale 0.96, router.back() with replace('/') fallback
+placements: saved machines header, saved detail top; camera and
+validation keep their existing cancel/actions
 ```

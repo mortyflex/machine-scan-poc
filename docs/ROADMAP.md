@@ -336,6 +336,43 @@ Delivered:
 - Cards/chips remain borderless (relief only); scrollbars remain hidden.
 - Exercises carousel, actions, fallback, save/saved/delete unchanged.
 
+## Phase 6.6.10 — Global background cleanup and sticker title restoration
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- previous fix removed too much of the sticker title effect
+- title should keep a sticker look with a larger, smoother white
+  border/backing
+- gray container backgrounds were still present outside details,
+  especially on saved machines
+- all card-based screens should use full-width white/premium backgrounds
+  and shadow-based cards
+- secondary menu screens need premium back navigation
+
+Delivered:
+
+- `StickerMachineTitle` restored as a real sticker: two stacked white
+  plates at slightly different rotations (−1.2° wrap, +2.4° backing with
+  negative insets) form an organic die-cut blob with natively smooth
+  corners — no pixelated text-copy outline; title Plus Jakarta Sans
+  ExtraBold 28 in #203040 with a soft white halo, subtitle inside.
+- Saved machines list rebuilt on the premium stage: unpadded Screen +
+  full-bleed `PremiumDottedBackground`, scrolling FlatList (was
+  scroll-disabled) with hidden indicator, states/empty on the clean
+  background; confidence pill switched to a cream fill (was invisible
+  white-on-white).
+- New shared `BackButton` (white circle/pill, chevron, soft shadow,
+  44 px target, router.back() with home fallback): added to the saved
+  machines header and to the top of the saved detail screen.
+- Background rule confirmed everywhere: page = white + subtle dots,
+  cards = white + shadow, wrappers transparent; audit shows no remaining
+  gray containers (only the intentional warm validation stage, hidden
+  debug panel, legacy reveal effect).
+- Scroll indicators hidden on saved list, details, saved detail,
+  exercise carousel; save/saved/delete/fallback flows unchanged.
+
 Next phase:
 
 ```txt

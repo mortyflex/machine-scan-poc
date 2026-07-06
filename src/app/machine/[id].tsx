@@ -20,6 +20,7 @@ import {
 import type { MachineScan } from '@/features/machine-scan/types';
 import {
   AppText,
+  BackButton,
   Card,
   PremiumDottedBackground,
   PrimaryButton,
@@ -142,6 +143,11 @@ export default function MachineDetailScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.backRow}>
+          <BackButton
+            onPress={() => router.replace('/saved-machines')}
+          />
+        </View>
         {scan.cutoutUri ? (
           <CutoutDisplayStage
             imageUri={scan.imageUri}
@@ -213,6 +219,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
+  },
+  backRow: {
+    alignItems: 'flex-start',
   },
   actions: {
     gap: spacing.sm,

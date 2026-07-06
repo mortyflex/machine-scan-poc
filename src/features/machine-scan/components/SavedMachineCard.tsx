@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { MachineScan } from '@/features/machine-scan/types';
 import { AppText, Card } from '@/shared/components';
-import { radius, spacing, useAppTheme } from '@/shared/theme';
+import { radius, spacing } from '@/shared/theme';
 
 export type SavedMachineCardProps = {
   machine: MachineScan;
@@ -12,7 +12,6 @@ export type SavedMachineCardProps = {
 
 export function SavedMachineCard({ machine }: SavedMachineCardProps) {
   const router = useRouter();
-  const theme = useAppTheme();
   const percent = Math.round(machine.confidence * 100);
   const hasCutout = Boolean(machine.cutoutUri);
 
@@ -36,13 +35,10 @@ export function SavedMachineCard({ machine }: SavedMachineCardProps) {
               {machine.primaryMuscles.join(' · ') || 'Muscles inconnus'}
             </AppText>
             <View style={styles.meta}>
-              <View
-                style={[
-                  styles.confidencePill,
-                  { backgroundColor: theme.colors.surface },
-                ]}
-              >
-                <AppText variant="caption">Confiance {percent}%</AppText>
+              <View style={styles.confidencePill}>
+                <AppText variant="caption" style={styles.confidenceText}>
+                  Confiance {percent}%
+                </AppText>
               </View>
               <AppText variant="caption" color="textMuted">
                 {formatDate(machine.createdAt)}
@@ -98,9 +94,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flexWrap: 'wrap',
   },
+  // Cream fill so the pill stays visible on the white card (the theme
+  // surface color is white since Phase 6.6.8).
   confidencePill: {
     paddingVertical: 2,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
+    backgroundColor: '#F5F2E9',
+  },
+  confidenceText: {
+    color: '#4A463C',
   },
 });

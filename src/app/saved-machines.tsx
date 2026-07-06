@@ -11,7 +11,14 @@ import {
   type StorageErrorKind,
 } from '@/features/machine-scan/storage';
 import type { MachineScan } from '@/features/machine-scan/types';
-import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
+import {
+  AppText,
+  BackButton,
+  Card,
+  PremiumDottedBackground,
+  PrimaryButton,
+  Screen,
+} from '@/shared/components';
 import { spacing, useAppTheme } from '@/shared/theme';
 
 type ListState =
@@ -44,30 +51,38 @@ export default function SavedMachinesScreen() {
   const renderContent = () => {
     if (state.status === 'loading') {
       return (
-        <Card style={styles.stateCard}>
-          <ActivityIndicator color={theme.colors.primary} />
-          <AppText variant="body" color="textSecondary" align="center">
-            Chargement des machines…
-          </AppText>
-        </Card>
+        <View style={styles.statePad}>
+          <Card style={styles.stateCard}>
+            <ActivityIndicator color={theme.colors.primary} />
+            <AppText variant="body" color="textSecondary" align="center">
+              Chargement des machines…
+            </AppText>
+          </Card>
+        </View>
       );
     }
 
     if (state.status === 'error') {
       return (
-        <Card style={styles.stateCard}>
-          <AppText variant="subtitle" color="danger">
-            Chargement impossible
-          </AppText>
-          <AppText variant="body" color="textSecondary">
-            Les machines sauvegardées sont indisponibles pour le moment.
-          </AppText>
-        </Card>
+        <View style={styles.statePad}>
+          <Card style={styles.stateCard}>
+            <AppText variant="subtitle" color="danger">
+              Chargement impossible
+            </AppText>
+            <AppText variant="body" color="textSecondary">
+              Les machines sauvegardées sont indisponibles pour le moment.
+            </AppText>
+          </Card>
+        </View>
       );
     }
 
     if (state.machines.length === 0) {
-      return <SavedMachinesEmptyState />;
+      return (
+        <View style={styles.statePad}>
+          <SavedMachinesEmptyState />
+        </View>
+      );
     }
 
     return (
@@ -76,36 +91,62 @@ export default function SavedMachinesScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <SavedMachineCard machine={item} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        scrollEnabled={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
       />
     );
   };
 
   return (
-    <Screen>
+    <Screen style={styles.screen}>
+      <PremiumDottedBackground />
       <View style={styles.header}>
-        <AppText variant="title">Machines sauvegardées</AppText>
+        <View style={styles.headerRow}>
+          <BackButton />
+          <AppText variant="title" style={styles.headerTitle}>
+            Machines sauvegardées
+          </AppText>
+        </View>
         <Link href="/camera" replace asChild>
           <PrimaryButton label="Scanner une machine" variant="ghost" />
         </Link>
       </View>
-      <View style={styles.content}>{renderContent()}</View>
+      {renderContent()}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  // Unpadded screen so the dotted premium background bleeds edge to edge
+  // (Yoga offsets absolute children by parent padding); the content
+  // paddings live on the header and list instead.
+  screen: {
+    paddingHorizontal: 0,
+  },
   header: {
-    gap: spacing.sm,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     alignItems: 'stretch',
   },
-  content: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headerTitle: {
     flex: 1,
+  },
+  statePad: {
+    paddingHorizontal: spacing.lg,
   },
   stateCard: {
     gap: spacing.sm,
     alignItems: 'center',
+  },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   separator: {
     height: spacing.sm,
