@@ -397,3 +397,38 @@ Manual QA on iPhone (required):
 - Fallback (cutout failed/disabled): honest photo card, no dust, no
   sticker border, "Détourage indisponible", actions available.
 - Old saved entries without `cutoutUri` still render the photo fallback.
+
+## Phase 6.6.6 — Premium cutout sizing and sticker beam polish
+
+QA finding:
+
+- real cutout works
+- first polish pass improved the screen but cutout was still too small
+- dust reveal was too subtle/fast
+- sticker border was visible but too weak
+- glow/shadow needed more depth
+- validation actions needed a more premium look
+- this phase increases cutout sizing, slows and strengthens the dust
+  reveal, improves sticker outline, adds a subtle animated sticker beam,
+  and upgrades validation actions
+
+Manual QA on iPhone (required):
+
+- Cutout clearly larger in validation (~74% height / 96% width) and in
+  details (~82% height / 98% width, 380 px stage), never distorted or
+  cropped.
+- Dust reveal is slower (~1.8 s total) and clearly visible in front of
+  the photo and on the premium background.
+- Sticker border reads as a thick (~8 px) die-cut white edge following
+  the silhouette.
+- A thin light beam orbits the sticker during validation (~5.6 s per
+  turn), subtle, never blocking buttons, stops when leaving the screen.
+- Glow and ground shadow give visible depth (object looks placed, not
+  pasted).
+- Sparkles are small glints, not floating confetti; shimmer is a thin
+  premium scan band.
+- Validation buttons look premium (graphite confirm pill with check
+  badge, glassy side pills with icons) and press feedback works.
+- Fallback (cutout failed/disabled): no beam, no sticker, no dust.
+- Save, saved list, and saved detail still work with and without
+  `cutoutUri`.

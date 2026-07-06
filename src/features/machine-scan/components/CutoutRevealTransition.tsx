@@ -10,10 +10,10 @@ import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
  * nothing keeps animating once the reveal is done.
  */
 
-export const REVEAL_DELAY_MS = 320;
-export const REVEAL_DURATION_MS = 1050;
+export const REVEAL_DELAY_MS = 300;
+export const REVEAL_DURATION_MS = 1500;
 
-const PARTICLE_COUNT = 52;
+const PARTICLE_COUNT = 84;
 
 // Dust palette: white, cream, pale yellow, light gray — all visible on the
 // premium warm background.
@@ -68,12 +68,12 @@ const PARTICLES: readonly DustParticle[] = (() => {
     particles.push({
       fx: rand(),
       fy: rand(),
-      dist: 34 + rand() * 106, // 34–140 px
-      lift: 14 + rand() * 38,
+      dist: 60 + rand() * 130, // 60–190 px
+      lift: 40 + rand() * 100, // 40–140 px
       jitter: (rand() - 0.5) * 0.9,
-      r: 1.2 + rand() * 1.8, // drawn at 2r ≈ 2.4–6 px
-      delay: rand() * 0.28,
-      peak: 0.78 + rand() * 0.22,
+      r: 0.85 + rand() * 1.15, // drawn ≈ 3–7 px overall
+      delay: rand() * 0.26,
+      peak: 0.85 + rand() * 0.15,
       spin: (rand() - 0.5) * 2.4,
       square: rand() < 0.35,
       color: PARTICLE_COLORS[Math.floor(rand() * PARTICLE_COLORS.length)],
@@ -167,8 +167,8 @@ function DustFragment({
 
   const opacity = useDerivedValue(() => {
     const q = local.value;
-    // Fast ramp-in, hold, then fade out — clearly visible mid-flight.
-    return Math.min(1, q * 4) * (1 - q * q) * particle.peak;
+    // Fast ramp-in, long visible flight, then dissolve near the end.
+    return Math.min(1, q * 3.5) * (1 - Math.pow(q, 2.4)) * particle.peak;
   });
 
   const transform = useDerivedValue(() => {
@@ -180,7 +180,7 @@ function DustFragment({
     ];
   });
 
-  const size = particle.r * 2.6;
+  const size = particle.r * 2.9;
   return (
     <Group transform={transform} opacity={opacity}>
       {particle.square ? (
@@ -189,7 +189,7 @@ function DustFragment({
           color={particle.color}
         />
       ) : (
-        <Circle cx={0} cy={0} r={particle.r * 1.6} color={particle.color} />
+        <Circle cx={0} cy={0} r={particle.r * 1.75} color={particle.color} />
       )}
     </Group>
   );

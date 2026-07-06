@@ -7,6 +7,10 @@ export {
   type CutoutDisplayStageProps,
 } from './CutoutDisplayStage';
 export {
+  CutoutOrbitBeam,
+  type CutoutOrbitBeamProps,
+} from './CutoutOrbitBeam';
+export {
   CutoutRevealDust,
   type CutoutRevealDustProps,
 } from './CutoutRevealTransition';

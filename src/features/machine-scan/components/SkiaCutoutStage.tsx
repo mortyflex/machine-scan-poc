@@ -27,6 +27,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { CutoutOrbitBeam } from './CutoutOrbitBeam';
 import {
   CutoutRevealDust,
   REVEAL_DELAY_MS,
@@ -55,23 +56,27 @@ const TITLE_COLOR = '#111111';
 const SUBTITLE_COLOR = '#6B6B6B';
 const CARD_RADIUS = 30;
 
-// Sticker illusion (Phase 6.6.5): the cutout silhouette is drawn in solid
-// white at offsets around the PNG alpha, giving a clearly visible 4–6 px
+// Sticker illusion (Phase 6.6.6): the cutout silhouette is drawn in solid
+// white at offsets around the PNG alpha, giving a clearly visible 7–10 px
 // die-cut border, plus one blurred white copy as a soft halo so the border
 // reads even against the light background.
 const STICKER_OFFSETS: readonly [number, number][] = [
-  [-5, 0],
-  [5, 0],
-  [0, -5],
-  [0, 5],
-  [-4, -4],
-  [4, -4],
-  [-4, 4],
-  [4, 4],
-  [-2, 0],
-  [2, 0],
-  [0, -2],
-  [0, 2],
+  [-8, 0],
+  [8, 0],
+  [0, -8],
+  [0, 8],
+  [-6, -6],
+  [6, -6],
+  [-6, 6],
+  [6, 6],
+  [-4, 0],
+  [4, 0],
+  [0, -4],
+  [0, 4],
+  [-3, -3],
+  [3, -3],
+  [-3, 3],
+  [3, 3],
 ];
 
 export function SkiaCutoutStage({
@@ -210,8 +215,8 @@ export function SkiaCutoutStage({
                 c={{ x: layout.glowCx, y: layout.glowCy }}
                 r={layout.glowR * 1.45}
                 colors={[
-                  'rgba(255,244,205,0.65)',
-                  'rgba(255,247,220,0.32)',
+                  'rgba(255,244,205,0.72)',
+                  'rgba(255,247,220,0.38)',
                   'rgba(248,248,245,0)',
                 ]}
                 positions={[0, 0.55, 1]}
@@ -226,8 +231,8 @@ export function SkiaCutoutStage({
                 c={{ x: layout.glowCx, y: layout.glowCy }}
                 r={layout.glowR}
                 colors={[
-                  'rgba(255,214,92,0.35)',
-                  'rgba(255,228,148,0.18)',
+                  'rgba(255,214,92,0.46)',
+                  'rgba(255,228,148,0.24)',
                   'rgba(248,248,245,0)',
                 ]}
                 positions={[0, 0.6, 1]}
@@ -249,9 +254,9 @@ export function SkiaCutoutStage({
                     y={layout.shadowY}
                     width={layout.shadowW}
                     height={layout.shadowH}
-                    color="rgba(0,0,0,0.24)"
+                    color="rgba(0,0,0,0.32)"
                   >
-                    <Blur blur={20} />
+                    <Blur blur={26} />
                   </Oval>
                 ) : null}
                 {/* Soft white halo hugging the silhouette */}
@@ -262,10 +267,9 @@ export function SkiaCutoutStage({
                   width={layout.objW}
                   height={layout.objH}
                   fit="contain"
-                  opacity={0.9}
                 >
                   <BlendColor color="#FFFFFF" mode="srcIn" />
-                  <Blur blur={9} />
+                  <Blur blur={12} />
                 </Image>
                 {STICKER_OFFSETS.map(([dx, dy], i) => (
                   <Image
@@ -289,6 +293,18 @@ export function SkiaCutoutStage({
                   fit="contain"
                 />
               </Group>
+
+              {/* Premium light beam slowly orbiting the sticker while the
+                  user decides (validation only, appears after the reveal) */}
+              {!isDetails ? (
+                <CutoutOrbitBeam
+                  cx={layout.objX + layout.objW / 2}
+                  cy={layout.objY + layout.objH / 2}
+                  rx={layout.objW * 0.44}
+                  ry={layout.objH * 0.47}
+                  progress={revealProgress}
+                />
+              ) : null}
 
               {/* Photo dissolving away above the cutout (validation only) */}
               {!isDetails && photoImage && layout.cardW > 0 ? (
@@ -476,19 +492,20 @@ function computeLayout(
     }
   }
 
-  // Object area: the cutout is the star of the screen — large, centered.
-  const objH = h * (isDetails ? 0.74 : 0.62);
-  const objW = w * 0.92;
+  // Object area: the cutout is the star of the screen — very large,
+  // centered, never distorted (fit contain does the letterboxing).
+  const objH = h * (isDetails ? 0.82 : 0.74);
+  const objW = w * (isDetails ? 0.98 : 0.96);
   const objX = (w - objW) / 2;
   const objY = cy - objH / 2 - (isDetails ? 0 : h * 0.015);
 
   // Glow centered on the object zone
-  const glowR = Math.min(w, h) * 0.52;
+  const glowR = Math.min(w, h) * 0.58;
   const glowCy = objY + objH / 2 - h * 0.02;
 
   // Shadow (soft ellipse below the object or the fallback card)
-  const shadowW = w * (useRealCutout ? 0.58 : 0.5);
-  const shadowH = 28;
+  const shadowW = w * (useRealCutout ? 0.64 : 0.5);
+  const shadowH = 30;
   const shadowX = (w - shadowW) / 2;
 
   // Photo card: also used as the dissolving source during the reveal, so
@@ -504,7 +521,7 @@ function computeLayout(
     glowCy,
     glowR,
     shadowX,
-    shadowY: useRealCutout ? objY + objH - 10 : cardY + cardH - 8,
+    shadowY: useRealCutout ? objY + objH - 14 : cardY + cardH - 8,
     shadowW,
     shadowH,
     objX,

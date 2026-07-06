@@ -187,6 +187,44 @@ Delivered:
 - Analysis state: brighter diagonal shimmer + 16 sparkles.
 - Fallback (no cutout) and save/saved flows unchanged.
 
+## Phase 6.6.6 — Premium cutout sizing and sticker beam polish
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- real cutout works
+- first polish pass improved the screen but cutout was still too small
+- dust reveal was too subtle/fast
+- sticker border was visible but too weak
+- glow/shadow needed more depth
+- validation actions needed a more premium look
+- this phase increases cutout sizing, slows and strengthens the dust
+  reveal, improves sticker outline, adds a subtle animated sticker beam,
+  and upgrades validation actions
+
+Delivered:
+
+- Cutout enlarged again: 74% height / 96% width in validation, 82% height
+  / 98% width in details; details stage raised to 380 px.
+- Dust reveal slowed and strengthened: 300 ms hold + 1500 ms reveal,
+  84 deterministic fragments, sizes ~3–7 px, travel 60–190 px with
+  40–140 px lift, start opacity 0.85–1.
+- Sticker border thickened to ~8 px: 16 solid-white silhouette offsets
+  (±8 / ±6 / ±4 / ±3) plus a sharper white halo (blur 12, full opacity).
+- New `CutoutOrbitBeam`: thin elliptical light sweep (3 px, white/pale
+  yellow sweep gradient + bright head dot) orbiting the sticker every
+  ~5.6 s during validation, fading in after the reveal, Skia-clock driven.
+- Glow deepened (core 0.46, wide 0.72, radius +12%) and ground shadow
+  strengthened (0.32, blur 26).
+- Analysis sparkles made smaller (r 1.1–1.9) and twinklier (20 sparkles,
+  individual speeds ~0.9–1.5 s, sharpened sine); shimmer band thinned to
+  68 px at 0.30 peak.
+- Premium validation actions: graphite confirm pill with yellow check
+  badge and soft shadow, glassy translucent side pills with icons
+  (`@expo/vector-icons`, press scale feedback, 58 px targets).
+- Fallback, save/saved flows and debug-free UI unchanged.
+
 Next phase:
 
 ```txt

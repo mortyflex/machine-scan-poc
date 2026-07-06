@@ -647,3 +647,69 @@ sparkles: 16, r 1.5–2.8, opacity 0.18–0.80
 
 Fallback without cutout is unchanged: honest cover photo card, no dust,
 no sticker border, "Détourage indisponible".
+
+## Phase 6.6.6 — Premium cutout sizing and sticker beam polish
+
+QA finding:
+
+- real cutout works
+- first polish pass improved the screen but cutout was still too small
+- dust reveal was too subtle/fast
+- sticker border was visible but too weak
+- glow/shadow needed more depth
+- validation actions needed a more premium look
+- this phase increases cutout sizing, slows and strengthens the dust
+  reveal, improves sticker outline, adds a subtle animated sticker beam,
+  and upgrades validation actions
+
+Staging spec (supersedes the 6.6.5 values):
+
+```txt
+cutout validation: 74% of stage height, 96% of stage width, fit contain
+cutout details: 82% of stage height, 98% of stage width, stage 380 px
+primary glow: rgba(255,214,92,0.46) core, radius 0.58·min(w,h)
+secondary glow: rgba(255,244,205,0.72) wide radial
+ground shadow: rgba(0,0,0,0.32), blur 26, near cutout bottom
+sticker border: 16 white silhouette offsets (±8, ±6 diag, ±4, ±3 diag)
+               + white halo (blur 12, full opacity) → ~8 px die-cut edge
+```
+
+Dust reveal (supersedes the 6.6.5 values):
+
+```txt
+hold: 300 ms — original photo still visible
+duration: 1500 ms, ease-out cubic
+particles: 84 deterministic fragments (seeded PRNG, module scope)
+sizes: ~3–7 px, start opacity 0.85–1
+travel: 60–190 px radial + 40–140 px upward lift
+opacity curve: fast ramp-in, long visible flight, dissolve near the end
+drawn above the dissolving photo, one-shot, no loops after
+```
+
+Orbit beam (`CutoutOrbitBeam`, validation only):
+
+```txt
+thin ellipse stroke (3 px) around the cutout zone
+sweep gradient white/pale yellow, bright head dot riding the beam
+full rotation ~5.6 s, gentle breathing opacity (~0.36–0.64)
+fades in once reveal progress > 80%, runs while validation is shown
+Skia clock driven — no JS timers; unmounts with the screen
+never shown in details, fallback, or when the cutout failed
+```
+
+Analysis state (supersedes the 6.6.5 values):
+
+```txt
+shimmer: band 68 px, peak rgba(255,255,255,0.30), period 2.1 s
+sparkles: 20, r 1.1–1.9, individual twinkle speeds (~0.9–1.5 s cycles)
+opacity 0.18–0.85 with sharpened sine — glints, not floating dots
+```
+
+Validation actions:
+
+```txt
+confirm: graphite pill (#161616, radius 999, h 58), yellow check badge,
+         soft drop shadow, press scale 0.97
+side: translucent white pills (0.88) with hairline border, soft shadow,
+      camera / close icons + labels
+```

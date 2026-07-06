@@ -19,7 +19,7 @@ export type CutoutDisplayStageProps = {
 export function CutoutDisplayStage({
   imageUri,
   cutoutUri,
-  height = 340,
+  height = 380,
 }: CutoutDisplayStageProps) {
   return (
     <View style={[styles.stage, { height }]}>
