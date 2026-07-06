@@ -181,9 +181,7 @@ export default function MachineDetailScreen() {
           </AppText>
         ) : null}
         <View style={styles.actions}>
-          <Link href="/saved-machines" replace asChild>
-            <PrimaryButton label="Retour à la liste" />
-          </Link>
+          {/* Back navigation lives in the top BackButton only. */}
           <PrimaryButton
             label={
               deleteState === 'deleting' ? 'Suppression…' : 'Supprimer cette machine'

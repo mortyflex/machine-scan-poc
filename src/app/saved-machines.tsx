@@ -1,4 +1,4 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
@@ -28,6 +28,7 @@ type ListState =
 
 export default function SavedMachinesScreen() {
   const theme = useAppTheme();
+  const router = useRouter();
   const [state, setState] = useState<ListState>({ status: 'loading' });
 
   useFocusEffect(
@@ -102,7 +103,8 @@ export default function SavedMachinesScreen() {
       <PremiumDottedBackground />
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <BackButton />
+          {/* Always back to home, regardless of navigation history. */}
+          <BackButton onPress={() => router.replace('/')} />
           <AppText variant="title" style={styles.headerTitle}>
             Machines sauvegardées
           </AppText>
