@@ -20,7 +20,11 @@ export {
   type CutoutDebugStatus,
 } from './CutoutDebugPanel';
 export { ExerciseList, type ExerciseListProps } from './ExerciseList';
-export { MachineResultCard, type MachineResultCardProps } from './MachineResultCard';
+export {
+  MachineResultCard,
+  machineTypeLabels,
+  type MachineResultCardProps,
+} from './MachineResultCard';
 export {
   MachineRevealEffect,
   type MachineRevealEffectLevel,

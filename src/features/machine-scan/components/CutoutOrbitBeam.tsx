@@ -17,6 +17,9 @@ import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
  */
 
 const ORBIT_PERIOD_MS = 5600;
+// The darker contour beam counter-rotates a touch slower so the two
+// sweeps keep crossing instead of chasing each other.
+const DARK_ORBIT_PERIOD_MS = 7400;
 const TWO_PI = Math.PI * 2;
 
 // The sweep gradient's bright head sits at this fraction of the circle;
@@ -48,6 +51,14 @@ export function CutoutOrbitBeam({
     { rotate: ((clock.value % ORBIT_PERIOD_MS) / ORBIT_PERIOD_MS) * TWO_PI },
   ]);
 
+  const darkTransform = useDerivedValue(() => [
+    {
+      rotate:
+        -((clock.value % DARK_ORBIT_PERIOD_MS) / DARK_ORBIT_PERIOD_MS) *
+        TWO_PI,
+    },
+  ]);
+
   // Gate on the reveal (0 until ~80% progress) with a gentle breathing so
   // the beam feels alive without ever getting loud.
   const opacity = useDerivedValue(() => {
@@ -65,33 +76,67 @@ export function CutoutOrbitBeam({
   const headX = cx + rx * Math.cos(headAngle);
   const headY = cy + ry * Math.sin(headAngle);
 
+  // The darker contour hugs the sticker a little tighter than the light
+  // beam so the two never read as one thick ring.
+  const darkRx = rx * 0.94;
+  const darkRy = ry * 0.94;
+
   return (
-    <Group transform={transform} origin={vec(cx, cy)} opacity={opacity}>
-      <Oval
-        x={cx - rx}
-        y={cy - ry}
-        width={rx * 2}
-        height={ry * 2}
-        style="stroke"
-        strokeWidth={3}
-      >
-        <SweepGradient
-          c={vec(cx, cy)}
-          colors={[
-            'rgba(255,255,255,0)',
-            'rgba(255,255,255,0)',
-            'rgba(255,228,148,0)',
-            'rgba(255,228,148,0.75)',
-            'rgba(255,255,255,1)',
-            'rgba(255,228,148,0.75)',
-            'rgba(255,228,148,0)',
-          ]}
-          positions={[0, 0.5, 0.62, 0.76, HEAD_POSITION, 0.92, 1]}
-        />
-      </Oval>
-      {/* Bright head riding the beam */}
-      <Circle cx={headX} cy={headY} r={3.2} color="rgba(255,255,255,0.95)" />
-      <Circle cx={headX} cy={headY} r={6} color="rgba(255,236,170,0.35)" />
-    </Group>
+    <>
+      {/* Darker graphite/golden contour, counter-rotating (Phase 6.6.7) */}
+      <Group transform={darkTransform} origin={vec(cx, cy)} opacity={opacity}>
+        <Oval
+          x={cx - darkRx}
+          y={cy - darkRy}
+          width={darkRx * 2}
+          height={darkRy * 2}
+          style="stroke"
+          strokeWidth={2}
+        >
+          <SweepGradient
+            c={vec(cx, cy)}
+            colors={[
+              'rgba(38,32,18,0)',
+              'rgba(38,32,18,0)',
+              'rgba(92,74,32,0)',
+              'rgba(92,74,32,0.26)',
+              'rgba(38,32,18,0.32)',
+              'rgba(92,74,32,0.26)',
+              'rgba(92,74,32,0)',
+            ]}
+            positions={[0, 0.5, 0.6, 0.74, HEAD_POSITION, 0.94, 1]}
+          />
+        </Oval>
+      </Group>
+
+      {/* Light premium beam with its bright head */}
+      <Group transform={transform} origin={vec(cx, cy)} opacity={opacity}>
+        <Oval
+          x={cx - rx}
+          y={cy - ry}
+          width={rx * 2}
+          height={ry * 2}
+          style="stroke"
+          strokeWidth={3}
+        >
+          <SweepGradient
+            c={vec(cx, cy)}
+            colors={[
+              'rgba(255,255,255,0)',
+              'rgba(255,255,255,0)',
+              'rgba(255,228,148,0)',
+              'rgba(255,228,148,0.75)',
+              'rgba(255,255,255,1)',
+              'rgba(255,228,148,0.75)',
+              'rgba(255,228,148,0)',
+            ]}
+            positions={[0, 0.5, 0.62, 0.76, HEAD_POSITION, 0.92, 1]}
+          />
+        </Oval>
+        {/* Bright head riding the beam */}
+        <Circle cx={headX} cy={headY} r={3.2} color="rgba(255,255,255,0.95)" />
+        <Circle cx={headX} cy={headY} r={6} color="rgba(255,236,170,0.35)" />
+      </Group>
+    </>
   );
 }

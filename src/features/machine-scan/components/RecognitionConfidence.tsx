@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/shared/components';
 import { radius, spacing, useAppTheme } from '@/shared/theme';
+import { appFonts } from '@/shared/theme/typography';
 
 export type RecognitionConfidenceProps = {
   confidence: number;
@@ -26,7 +27,13 @@ export function RecognitionConfidence({
         <AppText variant="caption" color="textSecondary">
           Confiance
         </AppText>
-        <AppText variant="subtitle">{percent}%</AppText>
+        <View
+          style={[styles.pill, { backgroundColor: theme.colors.primary }]}
+        >
+          <AppText variant="caption" color="primaryText" style={styles.pillText}>
+            {percent}%
+          </AppText>
+        </View>
       </View>
 
       {lowConfidence && (
@@ -69,5 +76,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
     borderWidth: 1,
+  },
+  pill: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+  },
+  pillText: {
+    fontFamily: appFonts.heading,
+    fontSize: 15,
+    lineHeight: 20,
   },
 });

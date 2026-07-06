@@ -1,8 +1,18 @@
 import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from "@expo-google-fonts/inter";
+import {
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from "@expo-google-fonts/plus-jakarta-sans";
+import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -20,6 +30,18 @@ export default function RootLayout() {
     "loading",
   );
 
+  // Global typography (Phase 6.6.7). Fonts ship inside the packages, so
+  // loading is local and fast; on the rare load error we render anyway —
+  // unknown families fall back to the system font, never a crash.
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+  });
+  const fontsReady = fontsLoaded || fontError !== null;
+
   useEffect(() => {
     let cancelled = false;
     initMachineScanDatabase().then((result) => {
@@ -31,7 +53,7 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (initState === "loading") {
+  if (initState === "loading" || !fontsReady) {
     return (
       <Screen style={styles.center}>
         <ActivityIndicator color={appTheme.colors.primary} />

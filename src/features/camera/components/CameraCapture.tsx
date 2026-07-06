@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
+import { appFonts } from '@/shared/theme/typography';
 
 type CaptureState =
   | { status: 'idle' }
@@ -221,16 +222,16 @@ const styles = StyleSheet.create({
   },
   topButtonText: {
     color: '#FFFFFF',
+    fontFamily: appFonts.bodySemiBold,
     fontSize: 16,
-    fontWeight: '600',
   },
   topButtonPlaceholder: {
     width: 64,
   },
   topTitle: {
     color: '#FFFFFF',
+    fontFamily: appFonts.heading,
     fontSize: 16,
-    fontWeight: '700',
     letterSpacing: 0.2,
   },
   frameArea: {
@@ -278,8 +279,8 @@ const styles = StyleSheet.create({
   },
   instruction: {
     color: '#FFFFFF',
+    fontFamily: appFonts.bodySemiBold,
     fontSize: 15,
-    fontWeight: '600',
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
@@ -323,8 +324,8 @@ const styles = StyleSheet.create({
   },
   captureHint: {
     color: '#FFFFFF',
+    fontFamily: appFonts.bodyMedium,
     fontSize: 13,
-    fontWeight: '500',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,

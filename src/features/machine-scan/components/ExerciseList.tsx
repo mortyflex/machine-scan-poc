@@ -112,8 +112,13 @@ const styles = StyleSheet.create({
   list: {
     gap: spacing.sm,
   },
+  // Mini-cards nested inside the exercises card: keep the border but drop
+  // the drop shadow so stacked cards don't pile up elevation.
   exercise: {
     gap: spacing.sm,
+    borderRadius: 20,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   header: {
     flexDirection: 'row',

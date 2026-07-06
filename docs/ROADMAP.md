@@ -225,6 +225,46 @@ Delivered:
   (`@expo/vector-icons`, press scale feedback, 58 px targets).
 - Fallback, save/saved flows and debug-free UI unchanged.
 
+## Phase 6.6.7 — Details premium polish and typography
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- cutout validation is mostly accepted
+- details hero cutout is still too small for future gym machines
+- details card needs stronger premium styling
+- machine name should live inside the cutout hero card with sticker
+  treatment
+- app typography should move to Plus Jakarta Sans for headings and Inter
+  for body copy
+- added a darker contour beam alongside the existing orbit beam
+
+Delivered:
+
+- `CutoutOrbitBeam`: second darker graphite/golden contour (2 px,
+  ~0.26–0.32 alpha) counter-rotating slightly slower (~7.4 s) inside the
+  light beam — validation only.
+- Details cutout enlarged to 90% height / 100% width of the hero stage;
+  hero card raised to 420 px with the object nudged up for the label.
+- Hero card premium: cream background (#FAF8F1), 36 px radius, hairline
+  warm border, deep soft shadow (0.18 / radius 30 / y 16) on an unclipped
+  wrapper.
+- Machine name moved into the hero card as a sticker pill (translucent
+  white, subtle −1.2° tilt, Plus Jakarta Sans ExtraBold, optional type
+  subtitle in Inter); hidden from the info card to avoid duplication.
+  Photo fallback keeps no sticker label.
+- Info block split into three premium cards (summary + confidence pill,
+  muscles, exercises with borderless mini-cards); shared `Card` upgraded
+  (radius 26, soft shadow).
+- Global typography: Plus Jakarta Sans Bold/ExtraBold headings, Inter
+  Regular/Medium body via `@expo-google-fonts` + `expo-font`, loaded in
+  the root layout (non-blocking on error), centralized in
+  `src/shared/theme/typography.ts` (`appFonts`); applied to AppText
+  variants, validation label/actions, camera overlay, PrimaryButton
+  (now premium pill with shadow).
+- Fallback, save/saved flows and debug-free UI unchanged.
+
 Next phase:
 
 ```txt

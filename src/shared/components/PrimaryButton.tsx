@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { useAppTheme } from '@/shared/theme';
+import { appFonts } from '@/shared/theme/typography';
 
 export type PrimaryButtonProps = Omit<PressableProps, 'style'> & {
   label: string;
@@ -44,11 +45,13 @@ export function PrimaryButton({
     <Pressable
       style={({ pressed }) => [
         styles.base,
+        isPrimary && !disabled && styles.primaryShadow,
         {
           backgroundColor,
           borderColor,
           opacity: pressed && !disabled ? 0.85 : 1,
         },
+        pressed && !disabled && styles.pressed,
         style,
       ]}
       disabled={disabled}
@@ -62,14 +65,24 @@ export function PrimaryButton({
 const styles = StyleSheet.create({
   base: {
     height: 56,
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  primaryShadow: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 5,
+  },
+  pressed: {
+    transform: [{ scale: 0.98 }],
+  },
   label: {
+    fontFamily: appFonts.heading,
     fontSize: 16,
-    fontWeight: '600',
   },
 });

@@ -432,3 +432,34 @@ Manual QA on iPhone (required):
 - Fallback (cutout failed/disabled): no beam, no sticker, no dust.
 - Save, saved list, and saved detail still work with and without
   `cutoutUri`.
+
+## Phase 6.6.7 — Details premium polish and typography
+
+QA finding:
+
+- cutout validation is mostly accepted
+- details hero cutout is still too small for future gym machines
+- details card needs stronger premium styling
+- machine name should live inside the cutout hero card with sticker
+  treatment
+- app typography should move to Plus Jakarta Sans for headings and Inter
+  for body copy
+- added a darker contour beam alongside the existing orbit beam
+
+Manual QA on iPhone (required):
+
+- A darker graphite/golden contour counter-rotates inside the light beam
+  during validation; subtle, never dirty, absent in details/fallback.
+- Details hero cutout is clearly larger (~90% of the hero card) and the
+  hero card reads premium (cream background, deep soft shadow, hairline
+  border).
+- Machine name appears inside the hero card as a slightly tilted sticker
+  pill (name + type), and is not duplicated in the info card below.
+- With photo fallback (no cutout): no sticker label on the photo, name
+  stays in the info card.
+- Info block shows three premium cards (summary with confidence pill,
+  muscles, exercises) instead of one gray slab.
+- Headings render in Plus Jakarta Sans Bold, body copy in Inter, across
+  home, camera overlay, validation, details, saved screens.
+- App still boots and renders if fonts fail to load (system fallback).
+- Save, saved list, saved detail, old entries without `cutoutUri` intact.

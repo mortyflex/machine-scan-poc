@@ -713,3 +713,59 @@ confirm: graphite pill (#161616, radius 999, h 58), yellow check badge,
 side: translucent white pills (0.88) with hairline border, soft shadow,
       camera / close icons + labels
 ```
+
+## Phase 6.6.7 — Details premium polish and typography
+
+QA finding:
+
+- cutout validation is mostly accepted
+- details hero cutout is still too small for future gym machines
+- details card needs stronger premium styling
+- machine name should live inside the cutout hero card with sticker
+  treatment
+- app typography should move to Plus Jakarta Sans for headings and Inter
+  for body copy
+- added a darker contour beam alongside the existing orbit beam
+
+Contour beam (validation only, inside `CutoutOrbitBeam`):
+
+```txt
+second ellipse stroke 2 px at 0.94× the light beam radii
+sweep gradient graphite/golden: rgba(38,32,18,0.32) head,
+rgba(92,74,32,0.26) shoulders, transparent tail
+counter-rotation, period ~7.4 s (light beam stays at ~5.6 s)
+same reveal gate and breathing opacity as the light beam
+never in details, fallback, or failed cutout
+```
+
+Details hero card (`CutoutDisplayStage`):
+
+```txt
+height 420 px, radius 36, background #FAF8F1
+border 1 px rgba(230,220,190,0.45)
+shadow: black 0.18, radius 30, offset y 16 (on unclipped wrapper)
+cutout: 90% of stage height, 100% width, fit contain, nudged up 3%
+sticker name label pinned bottom center:
+  white 0.9 pill, radius 24, padding 22×12, shadow 0.14/16
+  −1.2° tilt, Plus Jakarta Sans ExtraBold 25, subtitle Inter 15
+  max 2 lines, hidden entirely in photo fallback mode
+```
+
+Info cards (details):
+
+```txt
+three cards: summary (confidence pill + description + alt names),
+muscles, exercises (mini-cards without stacked shadows)
+shared Card: radius 26, padding 20, soft shadow 0.06/16
+confidence: dark pill badge, Plus Jakarta Sans Bold 15
+```
+
+Typography:
+
+```txt
+headings: PlusJakartaSans_700Bold / _800ExtraBold
+body: Inter_400Regular; captions/labels: Inter_500Medium / _600SemiBold
+loaded via expo-font in the root layout; on load error the app renders
+with system fallback (no crash, no block)
+tokens centralized in src/shared/theme/typography.ts (appFonts)
+```

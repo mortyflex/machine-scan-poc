@@ -25,8 +25,13 @@ export function Card({ style, children, ...rest }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
+    borderRadius: 26,
     borderWidth: 1,
-    padding: 18,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
   },
 });

@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { appFonts } from '@/shared/theme/typography';
+
 export type ScanValidationActionsProps = {
   onConfirm: () => void;
   onRetake: () => void;
@@ -120,16 +122,16 @@ const styles = StyleSheet.create({
   },
   sideText: {
     color: '#1A1A1A',
+    fontFamily: appFonts.heading,
     fontSize: 15,
-    fontWeight: '700',
   },
   sideTextDisabled: {
     color: '#BFC2BB',
   },
   confirmText: {
     color: '#FFFFFF',
+    fontFamily: appFonts.heading,
     fontSize: 17,
-    fontWeight: '800',
     letterSpacing: 0.2,
   },
   pressed: {

@@ -27,6 +27,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { appFonts } from '@/shared/theme/typography';
+
 import { CutoutOrbitBeam } from './CutoutOrbitBeam';
 import {
   CutoutRevealDust,
@@ -493,11 +495,13 @@ function computeLayout(
   }
 
   // Object area: the cutout is the star of the screen — very large,
-  // centered, never distorted (fit contain does the letterboxing).
-  const objH = h * (isDetails ? 0.82 : 0.74);
-  const objW = w * (isDetails ? 0.98 : 0.96);
+  // centered, never distorted (fit contain does the letterboxing). The
+  // details hero pushes the object slightly up to leave room for the
+  // sticker name label pinned near the bottom of the card.
+  const objH = h * (isDetails ? 0.9 : 0.74);
+  const objW = w * (isDetails ? 1 : 0.96);
   const objX = (w - objW) / 2;
-  const objY = cy - objH / 2 - (isDetails ? 0 : h * 0.015);
+  const objY = cy - objH / 2 - h * (isDetails ? 0.03 : 0.015);
 
   // Glow centered on the object zone
   const glowR = Math.min(w, h) * 0.58;
@@ -554,8 +558,8 @@ const styles = StyleSheet.create({
   },
   machineName: {
     color: TITLE_COLOR,
+    fontFamily: appFonts.headingStrong,
     fontSize: 30,
-    fontWeight: '900',
     letterSpacing: -0.4,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.1)',
@@ -564,8 +568,8 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: SUBTITLE_COLOR,
+    fontFamily: appFonts.body,
     fontSize: 16,
-    fontWeight: '500',
     textAlign: 'center',
   },
   confirmPill: {
@@ -577,14 +581,14 @@ const styles = StyleSheet.create({
   },
   confirmText: {
     color: '#9A6B00',
+    fontFamily: appFonts.bodySemiBold,
     fontSize: 12,
-    fontWeight: '700',
   },
   fallbackHint: {
     marginTop: 6,
     color: '#9A9A96',
+    fontFamily: appFonts.bodyMedium,
     fontSize: 12,
-    fontWeight: '500',
     textAlign: 'center',
   },
 });

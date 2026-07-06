@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/shared/components';
+import { appFonts } from '@/shared/theme/typography';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScanValidationActions } from './ScanValidationActions';
@@ -66,8 +67,8 @@ const styles = StyleSheet.create({
   },
   hint: {
     color: '#9A9A96',
+    fontFamily: appFonts.bodyMedium,
     fontSize: 13,
-    fontWeight: '500',
     textAlign: 'center',
   },
 });

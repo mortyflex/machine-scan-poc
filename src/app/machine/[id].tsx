@@ -11,6 +11,7 @@ import {
   CutoutDisplayStage,
   MachineResultCard,
   PhotoFallbackCard,
+  machineTypeLabels,
 } from '@/features/machine-scan/components';
 import {
   deleteMachineScan,
@@ -137,12 +138,15 @@ export default function MachineDetailScreen() {
           <CutoutDisplayStage
             imageUri={scan.imageUri}
             cutoutUri={scan.cutoutUri}
+            machineName={scan.machineName}
+            machineSubtitle={machineTypeLabels[scan.machineType]}
           />
         ) : (
           <PhotoFallbackCard imageUri={scan.imageUri} variant="details" />
         )}
 
         <MachineResultCard
+          hideName={Boolean(scan.cutoutUri)}
           result={{
             machineName: scan.machineName,
             machineType: scan.machineType,

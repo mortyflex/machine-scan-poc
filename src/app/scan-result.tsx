@@ -307,8 +307,13 @@ function DetailsStage({
           entering={FadeInUp.delay(80).duration(450)}
           style={styles.detailsBlock}
         >
-          <DetailsVisual imageUri={imageUri} cutoutUri={cutoutUri} />
-          <MachineResultCard result={data} />
+          <DetailsVisual
+            imageUri={imageUri}
+            cutoutUri={cutoutUri}
+            machineName={data.machineName}
+            machineSubtitle={MACHINE_TYPE_LABELS[data.machineType]}
+          />
+          <MachineResultCard result={data} hideName={Boolean(cutoutUri)} />
           <SaveBlock data={data} imageUri={imageUri} cutoutUri={cutoutUri} />
         </Animated.View>
 
@@ -324,19 +329,31 @@ function DetailsStage({
 }
 
 /**
- * Top visual of the details screen: the real transparent cutout on the
- * shared premium stage (glow, dots, sticker border, shadow) when available,
- * otherwise the honest full photo (never squeezed, never a fake cutout).
+ * Top visual of the details screen: the real transparent cutout in the
+ * premium hero card (glow, dots, sticker border, sticker name label) when
+ * available, otherwise the honest full photo (never squeezed, never a
+ * fake cutout — and no sticker label pretending it is one).
  */
 function DetailsVisual({
   imageUri,
   cutoutUri,
+  machineName,
+  machineSubtitle,
 }: {
   imageUri: string;
   cutoutUri?: string;
+  machineName: string;
+  machineSubtitle?: string;
 }) {
   if (cutoutUri) {
-    return <CutoutDisplayStage imageUri={imageUri} cutoutUri={cutoutUri} />;
+    return (
+      <CutoutDisplayStage
+        imageUri={imageUri}
+        cutoutUri={cutoutUri}
+        machineName={machineName}
+        machineSubtitle={machineSubtitle}
+      />
+    );
   }
   return <PhotoFallbackCard imageUri={imageUri} variant="details" />;
 }
