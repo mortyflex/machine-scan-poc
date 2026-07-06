@@ -305,6 +305,37 @@ Delivered:
   ghost is now a soft white pill with light shadow.
 - Fallback, save/saved/delete flows and debug-free UI unchanged.
 
+## Phase 6.6.9 — Details background cleanup and smooth sticker title
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- details page still showed a gray vertical container behind cards
+- details content must sit on a full-width white/premium background
+- card borders should be removed in favor of premium shadows
+- machine title sticker outline looked pixelated
+- replaced hard/pixelated text outline with a larger rounded sticker
+  plate treatment
+
+Delivered:
+
+- Root cause of the gray rail: RN (Yoga) offsets absolutely-positioned
+  children by the parent's padding, so `PremiumDottedBackground` was
+  inset into a centered column by the Screen's 24 px padding. The
+  details screens now zero the Screen padding (moved onto the scroll
+  content), letting the background bleed edge to edge.
+- `PremiumDottedBackground` defaults switched to a pure white base with
+  rgba(17,17,17,0.05) dots (r 1.2, spacing 30) — no warm column, no
+  gray container feeling, seamless with the safe areas.
+- `StickerMachineTitle` rebuilt: the 12-offset text outline (jagged,
+  pixelated edge) is gone; the title now sits on a large rounded white
+  sticker plate (radius 30, padding 24×13, rgba(255,255,255,0.96),
+  soft shadow 0.15/18/y10, subtle −1° tilt) with the deep-blue
+  Plus Jakarta Sans ExtraBold title and the type subtitle inside.
+- Cards/chips remain borderless (relief only); scrollbars remain hidden.
+- Exercises carousel, actions, fallback, save/saved/delete unchanged.
+
 Next phase:
 
 ```txt

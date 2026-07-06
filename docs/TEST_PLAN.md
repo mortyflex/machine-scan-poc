@@ -498,3 +498,30 @@ Manual QA on iPhone (required):
 - Fallback without cutout: photo card, no sticker title lying on the
   photo, name stays in the info card.
 - Save, saved list, saved detail, old entries without `cutoutUri` intact.
+
+## Phase 6.6.9 — Details background cleanup and smooth sticker title
+
+QA finding:
+
+- details page still showed a gray vertical container behind cards
+- details content must sit on a full-width white/premium background
+- card borders should be removed in favor of premium shadows
+- machine title sticker outline looked pixelated
+- replaced hard/pixelated text outline with a larger rounded sticker
+  plate treatment
+
+Manual QA on iPhone (required):
+
+- No gray vertical container/rail behind the details cards: the dotted
+  background reaches both device edges on scan-result details and saved
+  detail, top to bottom.
+- Page background is white with a barely-visible dot grid; cards float
+  on it with shadows only, no borders.
+- Machine title sits on a large rounded white sticker plate: smooth
+  corners, no jagged/pixelated outline, soft shadow, slight tilt; long
+  names fit on two lines without clipping; subtitle inside the plate.
+- Title not duplicated in the summary card when the hero shows it.
+- Vertical scrollbar still hidden; exercise carousel and its cards
+  unaffected by the background change.
+- Delete / back buttons unchanged and functional on the clean page.
+- Fallback and save/saved/delete flows intact.

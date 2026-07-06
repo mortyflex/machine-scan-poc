@@ -8,38 +8,16 @@ export type StickerMachineTitleProps = {
   maxLines?: number;
 };
 
-const TITLE_COLOR = '#223247';
+const TITLE_COLOR = '#203040';
 const SUBTITLE_COLOR = '#5F6B78';
 
-// Text-hugging sticker outline (typo.png reference): the title is drawn in
-// thick white at offsets around the silhouette of the letters, then the
-// navy text on top — same trick as the Skia sticker border, but with RN
-// Text layers. 12 copies ≈ a 4–5 px die-cut edge that follows the glyphs
-// instead of a rectangular pill.
-const OUTLINE_OFFSETS: readonly [number, number][] = [
-  [-4, 0],
-  [4, 0],
-  [0, -4],
-  [0, 4],
-  [-3, -3],
-  [3, -3],
-  [-3, 3],
-  [3, 3],
-  [-2, -1],
-  [2, 1],
-  [-1, 2],
-  [1, -2],
-];
-
-// The four cardinal copies also carry a soft text shadow so the sticker
-// floats on the page without a plaque rectangle behind it.
-const SHADOW_COPIES = 4;
-
 /**
- * Sticker-style machine title (Phase 6.6.8): chunky rounded ExtraBold
- * text in deep blue with a thick white outline hugging the letters and a
- * soft diffuse shadow — inspired by the typo.png reference. Handles long
- * names on two lines.
+ * Sticker-style machine title (Phase 6.6.9): a large rounded white
+ * sticker plate with a soft diffuse shadow and the chunky deep-blue
+ * Plus Jakarta Sans title on top — the typo.png direction rendered
+ * cleanly in RN. The previous offset-text outline produced a jagged,
+ * pixelated edge, so it is gone: the plate gives the thick white
+ * sticker contour with perfectly smooth rounded corners instead.
  */
 export function StickerMachineTitle({
   title,
@@ -47,72 +25,52 @@ export function StickerMachineTitle({
   maxLines = 2,
 }: StickerMachineTitleProps) {
   return (
-    <View style={styles.container} pointerEvents="none">
-      <View style={styles.titleStack}>
-        {OUTLINE_OFFSETS.map(([dx, dy], index) => (
-          <Text
-            key={index}
-            style={[
-              styles.title,
-              styles.outline,
-              index < SHADOW_COPIES && styles.outlineShadow,
-              { transform: [{ translateX: dx }, { translateY: dy }] },
-            ]}
-            numberOfLines={maxLines}
-            accessible={false}
-            importantForAccessibility="no"
-          >
-            {title}
-          </Text>
-        ))}
+    <View style={styles.wrap} pointerEvents="none">
+      <View style={styles.plate}>
         <Text style={styles.title} numberOfLines={maxLines}>
           {title}
         </Text>
+        {subtitle ? (
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
-      {subtitle ? (
-        <Text style={styles.subtitle} numberOfLines={1}>
-          {subtitle}
-        </Text>
-      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrap: {
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    maxWidth: '94%',
   },
-  titleStack: {
+  plate: {
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderRadius: 30,
+    paddingHorizontal: 24,
+    paddingVertical: 13,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 18,
+    elevation: 7,
+    transform: [{ rotate: '-1deg' }],
   },
   title: {
     color: TITLE_COLOR,
     fontFamily: appFonts.headingStrong,
-    fontSize: 27,
-    lineHeight: 33,
+    fontSize: 26,
+    lineHeight: 32,
     letterSpacing: -0.3,
     textAlign: 'center',
-  },
-  outline: {
-    ...StyleSheet.absoluteFillObject,
-    color: '#FFFFFF',
-  },
-  outlineShadow: {
-    textShadowColor: 'rgba(30,40,60,0.22)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 7,
   },
   subtitle: {
     color: SUBTITLE_COLOR,
     fontFamily: appFonts.bodyMedium,
     fontSize: 15,
     textAlign: 'center',
-    textShadowColor: 'rgba(255,255,255,0.9)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
   },
 });

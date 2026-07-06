@@ -11,15 +11,18 @@ export type PremiumDottedBackgroundProps = {
 };
 
 /**
- * Full-bleed premium page background (Phase 6.6.8): warm base + very
- * subtle dotted grid, shared by the details screens so the content cards
- * float on the same stage as the hero. Static Skia canvas, absolutely
- * positioned behind the content, no animation.
+ * Full-bleed premium page background (Phase 6.6.9): pure white base +
+ * very subtle dotted grid, shared by the details screens so the content
+ * cards float on a clean full-width page — never a gray rail. Static
+ * Skia canvas, absolutely positioned behind the content, no animation.
+ * IMPORTANT: the parent must not have horizontal padding — RN (Yoga)
+ * offsets absolutely-positioned children by the parent's padding, which
+ * would inset this background into a centered column.
  */
 export function PremiumDottedBackground({
-  color = '#FAFAF7',
-  dotColor = 'rgba(60,55,40,0.07)',
-  spacing = 28,
+  color = '#FFFFFF',
+  dotColor = 'rgba(17,17,17,0.05)',
+  spacing = 30,
   dotRadius = 1.2,
 }: PremiumDottedBackgroundProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });

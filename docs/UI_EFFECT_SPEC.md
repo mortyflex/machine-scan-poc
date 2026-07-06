@@ -836,3 +836,35 @@ Retour à la liste: graphite primary pill
 Supprimer cette machine: danger pill #FDECEC bg / #B42318 text,
 soft shadow, no border
 ```
+
+## Phase 6.6.9 — Details background cleanup and smooth sticker title
+
+QA finding:
+
+- details page still showed a gray vertical container behind cards
+- details content must sit on a full-width white/premium background
+- card borders should be removed in favor of premium shadows
+- machine title sticker outline looked pixelated
+- replaced hard/pixelated text outline with a larger rounded sticker
+  plate treatment
+
+Page background (supersedes the 6.6.8 values):
+
+```txt
+base #FFFFFF, dots rgba(17,17,17,0.05), r 1.2 px, spacing 30 px
+truly full-bleed: the Screen wrapper is unpadded on details pages
+(horizontal padding lives on the scroll content) because Yoga offsets
+absolute children by the parent's padding — the source of the old
+centered gray rail
+```
+
+Sticker title (supersedes the 6.6.9 outline approach):
+
+```txt
+no offset-text outline (it rendered jagged/pixelated)
+rounded white sticker plate: rgba(255,255,255,0.96), radius 30,
+padding 24×13, shadow 0.15 / radius 18 / y 10, tilt −1°
+title: Plus Jakarta Sans ExtraBold 26/32, #203040, 2 lines max
+subtitle inside the plate: Inter Medium 15, #5F6B78
+plate max width 94% of the hero title zone, centered, never clipped
+```

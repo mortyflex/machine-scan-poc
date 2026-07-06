@@ -302,7 +302,7 @@ function DetailsStage({
   onRetake: () => void;
 }) {
   return (
-    <Screen>
+    <Screen style={styles.detailsScreen}>
       <PremiumDottedBackground />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -494,9 +494,15 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
   },
+  // The screen itself is unpadded so the dotted background bleeds to the
+  // device edges; the horizontal padding moves onto the scroll content.
+  detailsScreen: {
+    paddingHorizontal: 0,
+  },
   scrollContent: {
     gap: spacing.md,
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   detailsBlock: {
     gap: spacing.md,
