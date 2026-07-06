@@ -8,11 +8,14 @@ import {
   Fill,
   Group,
   Image,
+  LinearGradient,
   Oval,
   RadialGradient,
+  Rect,
   RoundedRect,
   rect,
   rrect,
+  vec,
   useImage,
 } from '@shopify/react-native-skia';
 import Animated, {
@@ -20,9 +23,15 @@ import Animated, {
   ZoomIn,
   useDerivedValue,
   useSharedValue,
+  withDelay,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
+
+import {
+  CutoutRevealDust,
+  REVEAL_DELAY_MS,
+  REVEAL_DURATION_MS,
+} from './CutoutRevealTransition';
 
 export type SkiaCutoutStageProps = {
   imageUri: string;
@@ -31,6 +40,12 @@ export type SkiaCutoutStageProps = {
   machineSubtitle?: string;
   needsConfirmation?: boolean;
   mode?: 'real-cutout' | 'photo-fallback';
+  /**
+   * 'validation' (default): full stage with label, one-shot dust reveal.
+   * 'details': static showcase — same premium background, sticker border
+   * and shadow, but no label, no reveal animation, no dust.
+   */
+  variant?: 'validation' | 'details';
 };
 
 type StageSize = { width: number; height: number };
@@ -39,36 +54,24 @@ const STAGE_BG = '#F8F8F5';
 const TITLE_COLOR = '#111111';
 const SUBTITLE_COLOR = '#6B6B6B';
 const CARD_RADIUS = 30;
-const REVEAL_DURATION_MS = 900;
 
-// Sticker illusion: the cutout silhouette is drawn in white at slight
-// offsets behind the real image, hugging the alpha of the PNG.
+// Sticker illusion (Phase 6.6.5): the cutout silhouette is drawn in solid
+// white at offsets around the PNG alpha, giving a clearly visible 4–6 px
+// die-cut border, plus one blurred white copy as a soft halo so the border
+// reads even against the light background.
 const STICKER_OFFSETS: readonly [number, number][] = [
-  [-1.5, 0],
-  [1.5, 0],
-  [0, -1.5],
-  [0, 1.5],
-  [-1, -1],
-  [1, 1],
-];
-
-// Deterministic dust field for the reveal (fractions of the card rect +
-// outward drift). Sober off-white fragments, one-shot, never looping.
-const REVEAL_PARTICLES = [
-  { fx: 0.06, fy: 0.12, dx: -34, dy: -52, r: 2.6, color: 'rgba(255,255,255,0.95)' },
-  { fx: 0.18, fy: 0.04, dx: 14, dy: -66, r: 2.0, color: 'rgba(232,232,226,0.9)' },
-  { fx: 0.34, fy: 0.09, dx: 30, dy: -58, r: 2.8, color: 'rgba(255,255,255,0.9)' },
-  { fx: 0.52, fy: 0.03, dx: 44, dy: -70, r: 1.8, color: 'rgba(240,238,230,0.9)' },
-  { fx: 0.68, fy: 0.08, dx: 52, dy: -54, r: 2.4, color: 'rgba(255,255,255,0.95)' },
-  { fx: 0.86, fy: 0.05, dx: 62, dy: -64, r: 2.0, color: 'rgba(232,232,226,0.9)' },
-  { fx: 0.96, fy: 0.16, dx: 70, dy: -40, r: 2.6, color: 'rgba(255,255,255,0.9)' },
-  { fx: 0.04, fy: 0.55, dx: -52, dy: -26, r: 2.2, color: 'rgba(240,238,230,0.9)' },
-  { fx: 0.97, fy: 0.48, dx: 64, dy: -22, r: 2.4, color: 'rgba(255,255,255,0.9)' },
-  { fx: 0.08, fy: 0.90, dx: -40, dy: 20, r: 2.0, color: 'rgba(232,232,226,0.9)' },
-  { fx: 0.30, fy: 0.96, dx: 18, dy: 34, r: 2.4, color: 'rgba(255,255,255,0.9)' },
-  { fx: 0.56, fy: 0.93, dx: 36, dy: 28, r: 1.8, color: 'rgba(240,238,230,0.9)' },
-  { fx: 0.78, fy: 0.95, dx: 50, dy: 24, r: 2.2, color: 'rgba(255,255,255,0.95)' },
-  { fx: 0.92, fy: 0.85, dx: 60, dy: 12, r: 2.0, color: 'rgba(232,232,226,0.9)' },
+  [-5, 0],
+  [5, 0],
+  [0, -5],
+  [0, 5],
+  [-4, -4],
+  [4, -4],
+  [-4, 4],
+  [4, 4],
+  [-2, 0],
+  [2, 0],
+  [0, -2],
+  [0, 2],
 ];
 
 export function SkiaCutoutStage({
@@ -78,8 +81,10 @@ export function SkiaCutoutStage({
   machineSubtitle,
   needsConfirmation,
   mode,
+  variant = 'validation',
 }: SkiaCutoutStageProps) {
   const resolvedMode = mode ?? (cutoutUri ? 'real-cutout' : 'photo-fallback');
+  const isDetails = variant === 'details';
   const [size, setSize] = useState<StageSize>({ width: 0, height: 0 });
   const [cutoutFailed, setCutoutFailed] = useState(false);
 
@@ -98,35 +103,56 @@ export function SkiaCutoutStage({
     setCutoutFailed(false);
   }, [cutoutUri]);
 
-  // One-shot "dust away" reveal: the photo card dissolves and the real
-  // cutout fades in. Plays once when the cutout becomes displayable and
-  // never loops; without a cutout the progress stays at 0 and the honest
-  // fallback renders as before.
-  const revealProgress = useSharedValue(0);
-  const hasRevealed = useRef(false);
+  // One-shot "dust away" reveal: the photo stays visible for a beat, then
+  // dissolves while dust escapes and the cutout scales in. Plays once when
+  // the cutout becomes displayable and never loops; without a cutout the
+  // progress stays at 0 and the honest fallback renders as before. The
+  // details variant skips straight to the settled state.
+  const revealProgress = useSharedValue(isDetails ? 1 : 0);
+  const hasRevealed = useRef(isDetails);
   useEffect(() => {
     if (useRealCutout && !hasRevealed.current) {
       hasRevealed.current = true;
-      revealProgress.value = withTiming(1, {
-        duration: REVEAL_DURATION_MS,
-        easing: Easing.out(Easing.cubic),
-      });
+      revealProgress.value = withDelay(
+        REVEAL_DELAY_MS,
+        withTiming(1, {
+          duration: REVEAL_DURATION_MS,
+          easing: Easing.out(Easing.cubic),
+        }),
+      );
     }
   }, [useRealCutout, revealProgress]);
 
   const photoOpacity = useDerivedValue(() =>
-    Math.max(0, 1 - revealProgress.value * 1.8),
+    Math.max(0, 1 - revealProgress.value * 1.6),
   );
-  const cutoutOpacity = useDerivedValue(() =>
-    Math.min(1, Math.max(0, (revealProgress.value - 0.25) / 0.5)),
-  );
-  const cutoutLift = useDerivedValue(() => [
-    { translateY: (1 - revealProgress.value) * 14 },
+  const photoTransform = useDerivedValue(() => [
+    { scale: 1 + revealProgress.value * 0.06 },
   ]);
+  const cutoutOpacity = useDerivedValue(() =>
+    Math.min(1, Math.max(0, (revealProgress.value - 0.2) / 0.5)),
+  );
+  const cutoutTransform = useDerivedValue(() => {
+    const p = revealProgress.value;
+    const eased = Math.min(1, Math.max(0, (p - 0.1) / 0.9));
+    return [
+      { translateY: (1 - eased) * 16 },
+      { scale: 0.92 + 0.08 * eased },
+    ];
+  });
 
   const layout = useMemo(
-    () => computeLayout(size, useRealCutout),
-    [size, useRealCutout],
+    () => computeLayout(size, useRealCutout, isDetails),
+    [size, useRealCutout, isDetails],
+  );
+
+  const objCenter = vec(
+    layout.objX + layout.objW / 2,
+    layout.objY + layout.objH / 2,
+  );
+  const cardCenter = vec(
+    layout.cardX + layout.cardW / 2,
+    layout.cardY + layout.cardH / 2,
   );
 
   return (
@@ -143,6 +169,22 @@ export function SkiaCutoutStage({
         <Canvas style={StyleSheet.absoluteFillObject}>
           <Fill color={STAGE_BG} />
 
+          {/* Subtle warm vertical tint so the stage never reads flat white */}
+          {size.height > 0 ? (
+            <Rect x={0} y={0} width={size.width} height={size.height}>
+              <LinearGradient
+                start={vec(0, 0)}
+                end={vec(0, size.height)}
+                colors={[
+                  'rgba(255,250,232,0.0)',
+                  'rgba(255,244,205,0.28)',
+                  'rgba(255,238,186,0.16)',
+                ]}
+                positions={[0, 0.62, 1]}
+              />
+            </Rect>
+          ) : null}
+
           {layout.dots.length > 0 ? (
             <Group>
               {layout.dots.map((d, i) => (
@@ -150,22 +192,26 @@ export function SkiaCutoutStage({
                   key={i}
                   cx={d.x}
                   cy={d.y}
-                  r={1.1}
-                  color="rgba(0,0,0,0.05)"
+                  r={1.4}
+                  color="rgba(60,55,40,0.11)"
                 />
               ))}
             </Group>
           ) : null}
 
-          {/* Soft yellow glow behind the object */}
+          {/* Wide soft cream glow behind the whole object zone */}
           {layout.glowR > 0 ? (
-            <Circle cx={layout.glowCx} cy={layout.glowCy} r={layout.glowR}>
+            <Circle
+              cx={layout.glowCx}
+              cy={layout.glowCy}
+              r={layout.glowR * 1.45}
+            >
               <RadialGradient
                 c={{ x: layout.glowCx, y: layout.glowCy }}
-                r={layout.glowR}
+                r={layout.glowR * 1.45}
                 colors={[
-                  'rgba(255,233,168,0.55)',
-                  'rgba(255,243,207,0.3)',
+                  'rgba(255,244,205,0.65)',
+                  'rgba(255,247,220,0.32)',
                   'rgba(248,248,245,0)',
                 ]}
                 positions={[0, 0.55, 1]}
@@ -173,21 +219,54 @@ export function SkiaCutoutStage({
             </Circle>
           ) : null}
 
+          {/* Warmer yellow core glow right behind the object */}
+          {layout.glowR > 0 ? (
+            <Circle cx={layout.glowCx} cy={layout.glowCy} r={layout.glowR}>
+              <RadialGradient
+                c={{ x: layout.glowCx, y: layout.glowCy }}
+                r={layout.glowR}
+                colors={[
+                  'rgba(255,214,92,0.35)',
+                  'rgba(255,228,148,0.18)',
+                  'rgba(248,248,245,0)',
+                ]}
+                positions={[0, 0.6, 1]}
+              />
+            </Circle>
+          ) : null}
+
           {useRealCutout ? (
             <>
-              {/* Cutout layer: shadow + sticker border + object, fading in */}
-              <Group opacity={cutoutOpacity} transform={cutoutLift}>
+              {/* Cutout layer: ground shadow + halo + sticker border + object */}
+              <Group
+                opacity={cutoutOpacity}
+                transform={cutoutTransform}
+                origin={objCenter}
+              >
                 {layout.shadowW > 0 ? (
                   <Oval
                     x={layout.shadowX}
                     y={layout.shadowY}
                     width={layout.shadowW}
                     height={layout.shadowH}
-                    color="rgba(0,0,0,0.16)"
+                    color="rgba(0,0,0,0.24)"
                   >
-                    <Blur blur={18} />
+                    <Blur blur={20} />
                   </Oval>
                 ) : null}
+                {/* Soft white halo hugging the silhouette */}
+                <Image
+                  image={cutoutImage}
+                  x={layout.objX}
+                  y={layout.objY}
+                  width={layout.objW}
+                  height={layout.objH}
+                  fit="contain"
+                  opacity={0.9}
+                >
+                  <BlendColor color="#FFFFFF" mode="srcIn" />
+                  <Blur blur={9} />
+                </Image>
                 {STICKER_OFFSETS.map(([dx, dy], i) => (
                   <Image
                     key={i}
@@ -198,7 +277,7 @@ export function SkiaCutoutStage({
                     height={layout.objH}
                     fit="contain"
                   >
-                    <BlendColor color="rgba(255,255,255,0.85)" mode="srcIn" />
+                    <BlendColor color="#FFFFFF" mode="srcIn" />
                   </Image>
                 ))}
                 <Image
@@ -211,9 +290,13 @@ export function SkiaCutoutStage({
                 />
               </Group>
 
-              {/* Photo card dissolving away above the cutout */}
-              {photoImage && layout.cardW > 0 ? (
-                <Group opacity={photoOpacity}>
+              {/* Photo dissolving away above the cutout (validation only) */}
+              {!isDetails && photoImage && layout.cardW > 0 ? (
+                <Group
+                  opacity={photoOpacity}
+                  transform={photoTransform}
+                  origin={cardCenter}
+                >
                   <RoundedRect
                     x={layout.cardX}
                     y={layout.cardY}
@@ -246,21 +329,16 @@ export function SkiaCutoutStage({
                 </Group>
               ) : null}
 
-              {/* One-shot dust particles carried away with the background */}
-              {layout.cardW > 0
-                ? REVEAL_PARTICLES.map((particle, i) => (
-                    <RevealParticle
-                      key={i}
-                      progress={revealProgress}
-                      x={layout.cardX + particle.fx * layout.cardW}
-                      y={layout.cardY + particle.fy * layout.cardH}
-                      dx={particle.dx}
-                      dy={particle.dy}
-                      r={particle.r}
-                      color={particle.color}
-                    />
-                  ))
-                : null}
+              {/* Dust escaping the dissolving photo, always drawn on top */}
+              {!isDetails && layout.cardW > 0 ? (
+                <CutoutRevealDust
+                  progress={revealProgress}
+                  x={layout.cardX}
+                  y={layout.cardY}
+                  width={layout.cardW}
+                  height={layout.cardH}
+                />
+              ) : null}
             </>
           ) : (
             <>
@@ -317,65 +395,27 @@ export function SkiaCutoutStage({
         </Canvas>
       </View>
 
-      <Animated.View
-        entering={ZoomIn.delay(80).duration(420)}
-        style={styles.label}
-      >
-        <Text style={styles.machineName}>{machineName}</Text>
-        {machineSubtitle ? (
-          <Text style={styles.subtitle}>{machineSubtitle}</Text>
-        ) : null}
-        {needsConfirmation ? (
-          <View style={styles.confirmPill}>
-            <Text style={styles.confirmText}>À confirmer</Text>
-          </View>
-        ) : null}
-        {!useRealCutout ? (
-          <Text style={styles.fallbackHint}>Détourage indisponible</Text>
-        ) : null}
-      </Animated.View>
+      {!isDetails ? (
+        <Animated.View
+          entering={ZoomIn.delay(80).duration(420)}
+          style={styles.label}
+        >
+          <Text style={styles.machineName}>{machineName}</Text>
+          {machineSubtitle ? (
+            <Text style={styles.subtitle}>{machineSubtitle}</Text>
+          ) : null}
+          {needsConfirmation ? (
+            <View style={styles.confirmPill}>
+              <Text style={styles.confirmText}>À confirmer</Text>
+            </View>
+          ) : null}
+          {!useRealCutout ? (
+            <Text style={styles.fallbackHint}>Détourage indisponible</Text>
+          ) : null}
+        </Animated.View>
+      ) : null}
     </View>
   );
-}
-
-/**
- * A single dust fragment of the reveal: ramps in quickly, drifts outward
- * with an ease-out curve, and fades to zero by the end of the reveal —
- * nothing keeps animating on the stable cutout.
- */
-function RevealParticle({
-  progress,
-  x,
-  y,
-  dx,
-  dy,
-  r,
-  color,
-}: {
-  progress: SharedValue<number>;
-  x: number;
-  y: number;
-  dx: number;
-  dy: number;
-  r: number;
-  color: string;
-}) {
-  const cx = useDerivedValue(() => {
-    const p = progress.value;
-    const eased = 1 - (1 - p) * (1 - p);
-    return x + dx * eased;
-  });
-  const cy = useDerivedValue(() => {
-    const p = progress.value;
-    const eased = 1 - (1 - p) * (1 - p);
-    return y + dy * eased - 24 * p;
-  });
-  const opacity = useDerivedValue(() => {
-    const p = progress.value;
-    return Math.min(1, p * 5) * (1 - p) * 0.9;
-  });
-
-  return <Circle cx={cx} cy={cy} r={r} color={color} opacity={opacity} />;
 }
 
 type Layout = {
@@ -416,35 +456,39 @@ const EMPTY_LAYOUT: Layout = {
   cardH: 0,
 };
 
-function computeLayout(size: StageSize, useRealCutout: boolean): Layout {
+function computeLayout(
+  size: StageSize,
+  useRealCutout: boolean,
+  isDetails: boolean,
+): Layout {
   const { width: w, height: h } = size;
   if (w === 0 || h === 0) return EMPTY_LAYOUT;
 
   const cx = w / 2;
   const cy = h / 2;
 
-  // Dotted pattern (sparse, subtle)
+  // Dotted pattern (visible but discreet)
   const dots: { x: number; y: number }[] = [];
-  const step = 30;
+  const step = 26;
   for (let y = step / 2; y < h; y += step) {
     for (let x = step / 2; x < w; x += step) {
       dots.push({ x, y });
     }
   }
 
-  // Glow
-  const glowR = Math.min(w, h) * 0.42;
-  const glowCy = cy - h * 0.04;
-
-  // Object area (45-60% of canvas height)
-  const objH = h * 0.52;
-  const objW = w * 0.82;
+  // Object area: the cutout is the star of the screen — large, centered.
+  const objH = h * (isDetails ? 0.74 : 0.62);
+  const objW = w * 0.92;
   const objX = (w - objW) / 2;
-  const objY = cy - objH / 2;
+  const objY = cy - objH / 2 - (isDetails ? 0 : h * 0.015);
+
+  // Glow centered on the object zone
+  const glowR = Math.min(w, h) * 0.52;
+  const glowCy = objY + objH / 2 - h * 0.02;
 
   // Shadow (soft ellipse below the object or the fallback card)
-  const shadowW = w * 0.5;
-  const shadowH = 26;
+  const shadowW = w * (useRealCutout ? 0.58 : 0.5);
+  const shadowH = 28;
   const shadowX = (w - shadowW) / 2;
 
   // Photo card: also used as the dissolving source during the reveal, so
@@ -460,7 +504,7 @@ function computeLayout(size: StageSize, useRealCutout: boolean): Layout {
     glowCy,
     glowR,
     shadowX,
-    shadowY: useRealCutout ? objY + objH - 6 : cardY + cardH - 8,
+    shadowY: useRealCutout ? objY + objH - 10 : cardY + cardH - 8,
     shadowW,
     shadowH,
     objX,
@@ -488,7 +532,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 8,
   },
   machineName: {

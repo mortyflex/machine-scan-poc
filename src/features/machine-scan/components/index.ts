@@ -3,6 +3,14 @@ export {
   type CutoutAnalysisEffectProps,
 } from './CutoutAnalysisEffect';
 export {
+  CutoutDisplayStage,
+  type CutoutDisplayStageProps,
+} from './CutoutDisplayStage';
+export {
+  CutoutRevealDust,
+  type CutoutRevealDustProps,
+} from './CutoutRevealTransition';
+export {
   CutoutDebugPanel,
   type CutoutDebugPanelProps,
   type CutoutDebugStatus,

@@ -1,5 +1,4 @@
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
-import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -15,6 +14,7 @@ import type { CutoutErrorKind } from '@/features/machine-scan/cutout';
 import {
   CutoutAnalysisEffect,
   CutoutDebugPanel,
+  CutoutDisplayStage,
   MachineResultCard,
   PhotoFallbackCard,
   ScanValidationStage,
@@ -324,9 +324,9 @@ function DetailsStage({
 }
 
 /**
- * Top visual of the details screen: the real transparent cutout on a light
- * stage with a soft shadow when available, otherwise the honest full photo
- * (contained, never squeezed, never presented as a cutout).
+ * Top visual of the details screen: the real transparent cutout on the
+ * shared premium stage (glow, dots, sticker border, shadow) when available,
+ * otherwise the honest full photo (never squeezed, never a fake cutout).
  */
 function DetailsVisual({
   imageUri,
@@ -336,17 +336,7 @@ function DetailsVisual({
   cutoutUri?: string;
 }) {
   if (cutoutUri) {
-    return (
-      <View style={styles.detailsCutoutStage}>
-        <View style={styles.detailsCutoutShadow}>
-          <Image
-            source={{ uri: cutoutUri }}
-            style={styles.detailsCutoutImage}
-            contentFit="contain"
-          />
-        </View>
-      </View>
-    );
+    return <CutoutDisplayStage imageUri={imageUri} cutoutUri={cutoutUri} />;
   }
   return <PhotoFallbackCard imageUri={imageUri} variant="details" />;
 }
@@ -485,25 +475,6 @@ const styles = StyleSheet.create({
   },
   detailsBlock: {
     gap: spacing.md,
-  },
-  detailsCutoutStage: {
-    backgroundColor: '#F8F8F5',
-    borderRadius: 20,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  detailsCutoutShadow: {
-    width: '78%',
-    aspectRatio: 1,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.18,
-    shadowRadius: 22,
-    elevation: 8,
-  },
-  detailsCutoutImage: {
-    width: '100%',
-    height: '100%',
   },
   actions: {
     gap: spacing.sm,

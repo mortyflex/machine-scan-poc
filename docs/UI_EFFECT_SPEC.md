@@ -589,3 +589,61 @@ The effect is successful when:
 - It does not block error states.
 - It does not make the app feel slow.
 - It runs smoothly on iPhone.
+
+## Phase 6.6.5 — Premium cutout reveal staging
+
+QA finding:
+
+- real cutout pipeline works
+- cutout rendering was too small and too flat
+- dust/background disappearance effect was not visible
+- sticker border was invisible
+- this phase enlarges the cutout, improves the premium background, adds a
+  visible dust reveal, and strengthens the sticker-style outline
+
+Staging spec (validation, `SkiaCutoutStage`):
+
+```txt
+cutout target: 62% of stage height, 92% of stage width, fit contain
+background base: #F8F8F5 + warm vertical tint
+primary glow: rgba(255,214,92,0.35) radial core
+secondary glow: rgba(255,244,205,0.65) wide radial
+dotted pattern: r 1.4 px, step 26 px, rgba(60,55,40,0.11)
+ground shadow: rgba(0,0,0,0.24), blur 20
+sticker border: 12 white silhouette offsets (±5, ±4 diag, ±2)
+               + blurred white halo (blur 9, opacity 0.9)
+```
+
+Reveal (one-shot, `CutoutRevealTransition`):
+
+```txt
+trigger: cutout becomes displayable (once, guarded by ref)
+hold: 320 ms — original photo still visible
+duration: 1050 ms, ease-out cubic
+photo: opacity 1 → 0 (gone by ~60%), scale 1 → 1.06
+cutout: opacity 0 → 1, translateY 16 → 0, scale 0.92 → 1
+dust: 52 deterministic fragments (seeded PRNG, module scope)
+      radial escape 34–140 px + upward lift, sizes ~2.4–6 px
+      white / cream / pale yellow / light gray
+      ~35% square fragments with slight rotation
+      drawn above the dissolving photo, never masked
+after: everything static, no loops, actions usable
+```
+
+Details showcase (`CutoutDisplayStage`):
+
+```txt
+same premium stage, static (progress pinned at 1)
+no label, no dust, cutout at 74% of stage height
+reused by scan-result details and saved machine detail
+```
+
+Analysis state (`CutoutAnalysisEffect`):
+
+```txt
+shimmer: band 120 px, peak rgba(255,255,255,0.38), period 1.9 s
+sparkles: 16, r 1.5–2.8, opacity 0.18–0.80
+```
+
+Fallback without cutout is unchanged: honest cover photo card, no dust,
+no sticker border, "Détourage indisponible".

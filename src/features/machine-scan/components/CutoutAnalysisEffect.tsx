@@ -19,24 +19,29 @@ export type CutoutAnalysisEffectProps = {
 
 type CardSize = { width: number; height: number };
 
-const SHIMMER_BAND_WIDTH = 90;
-const SHIMMER_PERIOD_MS = 2600;
+const SHIMMER_BAND_WIDTH = 120;
+const SHIMMER_PERIOD_MS = 1900;
 
 // Deterministic sparkle field (fractions of the card size): no random on
-// render, 12 sparkles max, slow phases. White / pale yellow only.
+// render, 16 sparkles, slow phases. White / pale yellow only. Sized and
+// brightened in Phase 6.6.5 so the analysis state is clearly perceptible.
 const SPARKLES = [
-  { fx: 0.10, fy: 0.16, r: 2.2, phase: 0.05, color: '#FFFFFF' },
-  { fx: 0.22, fy: 0.72, r: 1.6, phase: 0.62, color: '#FFF3C4' },
-  { fx: 0.31, fy: 0.30, r: 1.4, phase: 0.31, color: '#FFFFFF' },
-  { fx: 0.44, fy: 0.82, r: 2.0, phase: 0.85, color: '#FFFFFF' },
-  { fx: 0.52, fy: 0.14, r: 1.8, phase: 0.47, color: '#FFF3C4' },
-  { fx: 0.63, fy: 0.58, r: 1.3, phase: 0.12, color: '#FFFFFF' },
-  { fx: 0.71, fy: 0.24, r: 2.4, phase: 0.73, color: '#FFF3C4' },
-  { fx: 0.78, fy: 0.78, r: 1.5, phase: 0.28, color: '#FFFFFF' },
-  { fx: 0.87, fy: 0.42, r: 1.9, phase: 0.55, color: '#FFFFFF' },
-  { fx: 0.93, fy: 0.68, r: 1.4, phase: 0.91, color: '#FFF3C4' },
-  { fx: 0.17, fy: 0.48, r: 1.2, phase: 0.40, color: '#FFFFFF' },
-  { fx: 0.58, fy: 0.90, r: 1.6, phase: 0.20, color: '#FFFFFF' },
+  { fx: 0.10, fy: 0.16, r: 2.6, phase: 0.05, color: '#FFFFFF' },
+  { fx: 0.22, fy: 0.72, r: 2.0, phase: 0.62, color: '#FFF3C4' },
+  { fx: 0.31, fy: 0.30, r: 1.8, phase: 0.31, color: '#FFFFFF' },
+  { fx: 0.44, fy: 0.82, r: 2.4, phase: 0.85, color: '#FFFFFF' },
+  { fx: 0.52, fy: 0.14, r: 2.2, phase: 0.47, color: '#FFF3C4' },
+  { fx: 0.63, fy: 0.58, r: 1.7, phase: 0.12, color: '#FFFFFF' },
+  { fx: 0.71, fy: 0.24, r: 2.8, phase: 0.73, color: '#FFF3C4' },
+  { fx: 0.78, fy: 0.78, r: 1.9, phase: 0.28, color: '#FFFFFF' },
+  { fx: 0.87, fy: 0.42, r: 2.3, phase: 0.55, color: '#FFFFFF' },
+  { fx: 0.93, fy: 0.68, r: 1.8, phase: 0.91, color: '#FFF3C4' },
+  { fx: 0.17, fy: 0.48, r: 1.6, phase: 0.40, color: '#FFFFFF' },
+  { fx: 0.58, fy: 0.90, r: 2.0, phase: 0.20, color: '#FFFFFF' },
+  { fx: 0.06, fy: 0.86, r: 1.8, phase: 0.68, color: '#FFF3C4' },
+  { fx: 0.38, fy: 0.08, r: 2.1, phase: 0.15, color: '#FFFFFF' },
+  { fx: 0.96, fy: 0.20, r: 1.7, phase: 0.80, color: '#FFFFFF' },
+  { fx: 0.49, fy: 0.50, r: 1.5, phase: 0.36, color: '#FFF3C4' },
 ];
 
 /**
@@ -108,7 +113,7 @@ function ShimmerBand({
           end={vec(SHIMMER_BAND_WIDTH, height)}
           colors={[
             'rgba(255,255,255,0)',
-            'rgba(255,255,255,0.22)',
+            'rgba(255,255,255,0.38)',
             'rgba(255,255,255,0)',
           ]}
         />
@@ -134,7 +139,7 @@ function AnalysisSparkle({
 }) {
   const opacity = useDerivedValue(() => {
     const t = clock.value / 1000;
-    return 0.12 + 0.5 * (0.5 + 0.5 * Math.sin(t * 1.9 + phase * Math.PI * 2));
+    return 0.18 + 0.62 * (0.5 + 0.5 * Math.sin(t * 1.9 + phase * Math.PI * 2));
   });
   const cy = useDerivedValue(() => {
     const t = clock.value / 1000;

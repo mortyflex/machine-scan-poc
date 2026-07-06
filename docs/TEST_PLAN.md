@@ -373,3 +373,27 @@ Then:
 ```bash
 git status
 ```
+
+## Phase 6.6.5 — Premium cutout reveal staging
+
+QA finding:
+
+- real cutout pipeline works
+- cutout rendering was too small and too flat
+- dust/background disappearance effect was not visible
+- sticker border was invisible
+- this phase enlarges the cutout, improves the premium background, adds a
+  visible dust reveal, and strengthens the sticker-style outline
+
+Manual QA on iPhone (required):
+
+- Cutout appears large (≥ ~60% of the stage height), centered, undistorted.
+- Background shows warm glow + dotted pattern, no flat white.
+- Dust/disappearance effect is clearly visible when the cutout arrives.
+- Sticker-style white border is visible around the object.
+- Reveal plays exactly once; buttons stay usable; no flashes.
+- Details screen and saved machine detail showcase the cutout on the
+  premium stage.
+- Fallback (cutout failed/disabled): honest photo card, no dust, no
+  sticker border, "Détourage indisponible", actions available.
+- Old saved entries without `cutoutUri` still render the photo fallback.

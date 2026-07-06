@@ -1,5 +1,4 @@
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
-import { Image } from 'expo-image';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,6 +8,7 @@ import {
 } from 'react-native';
 
 import {
+  CutoutDisplayStage,
   MachineResultCard,
   PhotoFallbackCard,
 } from '@/features/machine-scan/components';
@@ -134,15 +134,10 @@ export default function MachineDetailScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {scan.cutoutUri ? (
-          <View style={styles.cutoutStage}>
-            <View style={styles.cutoutShadow}>
-              <Image
-                source={{ uri: scan.cutoutUri }}
-                style={styles.cutoutImage}
-                contentFit="contain"
-              />
-            </View>
-          </View>
+          <CutoutDisplayStage
+            imageUri={scan.imageUri}
+            cutoutUri={scan.cutoutUri}
+          />
         ) : (
           <PhotoFallbackCard imageUri={scan.imageUri} variant="details" />
         )}
@@ -200,25 +195,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: spacing.md,
     paddingVertical: spacing.md,
-  },
-  cutoutStage: {
-    backgroundColor: '#F8F8F5',
-    borderRadius: 20,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  cutoutShadow: {
-    width: '78%',
-    aspectRatio: 1,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.18,
-    shadowRadius: 22,
-    elevation: 8,
-  },
-  cutoutImage: {
-    width: '100%',
-    height: '100%',
   },
   actions: {
     gap: spacing.sm,

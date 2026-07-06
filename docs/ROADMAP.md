@@ -156,6 +156,37 @@ Delivered:
   existing glow and soft shadow.
 - Fallback (no cutout), details/save/saved flows unchanged.
 
+## Phase 6.6.5 — Premium cutout reveal staging
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- real cutout pipeline works
+- cutout rendering was too small and too flat
+- dust/background disappearance effect was not visible
+- sticker border was invisible
+- this phase enlarges the cutout, improves the premium background, adds a
+  visible dust reveal, and strengthens the sticker-style outline
+
+Delivered:
+
+- Cutout enlarged to ~62% height / 92% width of the validation stage
+  (74% height in details variant); it is the star of the screen.
+- Premium background: warm vertical tint, double radial glow
+  (cream + yellow core), denser/darker dotted pattern, stronger ground
+  shadow.
+- Visible sticker border: 12 solid-white silhouette offsets (±5/±4/±2 px)
+  plus a blurred white halo hugging the PNG alpha.
+- `CutoutRevealTransition`: 52 deterministic dust fragments (seeded PRNG,
+  module scope) escaping radially with lift and light rotation while the
+  photo card fades/scales away and the cutout scales in
+  (320 ms hold + 1050 ms reveal, one-shot).
+- `CutoutDisplayStage`: shared static showcase reused by scan-result
+  details and saved machine detail (same stage, no reveal, no label).
+- Analysis state: brighter diagonal shimmer + 16 sparkles.
+- Fallback (no cutout) and save/saved flows unchanged.
+
 Next phase:
 
 ```txt
