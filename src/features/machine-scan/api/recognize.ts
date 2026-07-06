@@ -1,10 +1,7 @@
-import type { MachineRecognitionResult } from '@/features/machine-scan/types';
-
 import type { RecognitionResult } from './errors';
 import { mockProvider, type RecognitionProvider } from './mock-provider';
-import { machineRecognitionSchema } from './schema';
-
-const LOW_CONFIDENCE_THRESHOLD = 0.6;
+import { getRecognitionConfig } from './recognition-config';
+import { validateRecognitionPayload } from './validate-recognition';
 
 export type RecognizeOptions = {
   provider?: RecognitionProvider;
@@ -24,6 +21,27 @@ export async function recognizeMachine(
     };
   }
 
+  // An explicitly injected provider (tests) always wins over env config.
+  const config = getRecognitionConfig();
+  if (!options?.provider && config.provider === 'remote') {
+    if (!config.apiBaseUrl) {
+      return {
+        ok: false,
+        error: {
+          kind: 'provider_error',
+          message: 'Missing EXPO_PUBLIC_RECOGNITION_API_BASE_URL',
+        },
+      };
+    }
+    // Lazy import: only load the (expo-file-system dependent) provider
+    // when remote recognition is enabled, keeping tests runnable in
+    // plain Node without the React Native runtime.
+    const { requestRemoteRecognition } = await import(
+      './remote-recognition-provider'
+    );
+    return requestRemoteRecognition(imageUri, config);
+  }
+
   const provider: RecognitionProvider = options?.provider ?? mockProvider;
   let raw: unknown;
   try {
@@ -39,30 +57,7 @@ export async function recognizeMachine(
     };
   }
 
-  const parsed = machineRecognitionSchema.safeParse(raw);
-  if (!parsed.success) {
-    return {
-      ok: false,
-      error: {
-        kind: 'invalid_response',
-        message: 'La réponse de reconnaissance est invalide.',
-        cause: parsed.error,
-      },
-    };
-  }
-
-  const result: MachineRecognitionResult = parsed.data;
-  if (
-    result.confidence < LOW_CONFIDENCE_THRESHOLD &&
-    !result.needsConfirmation
-  ) {
-    result.needsConfirmation = true;
-    result.uncertaintyReason =
-      result.uncertaintyReason ??
-      'Confiance trop basse pour valider la reconnaissance.';
-  }
-
-  return { ok: true, data: result };
+  return validateRecognitionPayload(raw);
 }
 
 export { type RecognitionErrorKind, type RecognitionResult } from './errors';

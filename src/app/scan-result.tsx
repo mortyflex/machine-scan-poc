@@ -69,6 +69,8 @@ const ERROR_MESSAGES: Record<RecognitionErrorKind, string> = {
     "La reconnaissance n'a pas pu être interprétée. Réessaie ou reprends une photo.",
   provider_error:
     "Le service de reconnaissance est indisponible. Réessaie dans un instant.",
+  network_error:
+    "Le serveur d'analyse est injoignable. Vérifie la connexion réseau et réessaie.",
 };
 
 const MACHINE_TYPE_LABELS: Record<MachineType, string> = {
@@ -384,13 +386,13 @@ function ErrorScreen({
     <Screen style={styles.center}>
       <Card style={styles.stateCard}>
         <AppText variant="subtitle" color="danger">
-          Reconnaissance impossible
+          Analyse impossible pour le moment
         </AppText>
         <AppText variant="body" color="textSecondary" align="center">
           {ERROR_MESSAGES[kind]}
         </AppText>
-        <PrimaryButton label="Réessayer" onPress={onRetry} />
-        <PrimaryButton label="Reprendre une photo" variant="ghost" onPress={onRetake} />
+        <PrimaryButton label="Réessayer l'analyse" onPress={onRetry} />
+        <PrimaryButton label="Reprendre la photo" variant="ghost" onPress={onRetake} />
         <Link href="/" replace asChild>
           <PrimaryButton label="Accueil" variant="ghost" />
         </Link>

@@ -375,8 +375,48 @@ Delivered:
 - Scroll indicators hidden on saved list, details, saved detail,
   exercise carousel; save/saved/delete/fallback flows unchanged.
 
+## Phase 7 — Real machine recognition backend provider
+
+Status: DONE (pending iPhone QA)
+
+Problem: whatever the photo, the app always showed the mock
+"Presse à cuisses inclinée" because recognition was still mocked.
+
+Delivered:
+
+- Mobile recognition provider selection via
+  `EXPO_PUBLIC_RECOGNITION_PROVIDER` (`mock` default / `remote`;
+  unknown → mock) and `EXPO_PUBLIC_RECOGNITION_API_BASE_URL`
+  (fallback `EXPO_PUBLIC_API_BASE_URL`), in
+  `src/features/machine-scan/api/recognition-config.ts`.
+- Remote mobile provider (`remote-recognition-provider.ts`,
+  lazy-imported): local photo → base64 → `POST /api/machine-recognition`
+  → Zod validation with the shared strict schema. Typed errors
+  (`missing_image | network_error | provider_error | invalid_response`);
+  remote failures show a readable error screen with retry/retake, never
+  silent mock data.
+- New `network_error` recognition kind wired into the scan-result error
+  screen ("Analyse impossible pour le moment").
+- Backend `POST /api/machine-recognition` +
+  `GET /api/machine-recognition/debug` (safe: key presence only) on the
+  existing Node server, with `[recognition-server]` logs.
+- Server provider architecture `server/recognition/` (types, service,
+  `providers/mock.ts`, `providers/gemini.ts`) mirroring the cutout
+  architecture; `RECOGNITION_PROVIDER=mock|gemini|disabled` (default
+  mock).
+- Gemini vision provider, server-only key (`GEMINI_API_KEY`), model
+  configurable via `GEMINI_RECOGNITION_MODEL` (default
+  `gemini-3.1-flash-lite`), French prompt, structured JSON output,
+  server-side Zod validation, `needsConfirmation` forced < 0.75,
+  out-of-enum `machineType` coerced to `unknown`.
+- Schema evolution: `possibleExercises` may now be empty so non-machine
+  objects (mouse, chair…) are reported honestly instead of forcing fake
+  exercises. `ExerciseCarousel` already renders nothing for an empty
+  list.
+- Mock recognition and the whole cutout/reveal/save pipeline unchanged.
+
 Next phase:
 
 ```txt
-Phase 7 — Real AI recognition provider (backend)
+Phase 8 — Product iteration after real recognition QA
 ```

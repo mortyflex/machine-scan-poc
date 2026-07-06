@@ -34,7 +34,9 @@ export const machineRecognitionSchema = z.object({
   description: nonEmptyString,
   primaryMuscles: stringArray,
   secondaryMuscles: stringArray,
-  possibleExercises: z.array(machineExerciseSchema).min(1),
+  // Empty is allowed: when the photo does not show a gym machine, an
+  // honest provider returns no exercises instead of inventing some.
+  possibleExercises: z.array(machineExerciseSchema),
   alternativeNames: stringArray,
   needsConfirmation: z.boolean(),
   uncertaintyReason: z.string().nullable(),

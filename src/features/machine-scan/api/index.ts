@@ -3,3 +3,8 @@ export { type RecognitionErrorKind, type RecognitionResult } from './errors';
 export { machineRecognitionSchema } from './schema';
 export { mockProvider, type RecognitionProvider } from './mock-provider';
 export type { MachineRecognitionRaw } from './schema';
+export {
+  getRecognitionConfig,
+  type MobileRecognitionConfig,
+} from './recognition-config';
+export { validateRecognitionPayload } from './validate-recognition';

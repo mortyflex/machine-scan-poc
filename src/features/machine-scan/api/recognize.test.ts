@@ -28,10 +28,15 @@ test('machineRecognitionSchema rejects confidence out of range', () => {
   assert.equal(parsed.success, false);
 });
 
-test('machineRecognitionSchema rejects empty possibleExercises', () => {
-  const bad = { ...mockValidResult(), possibleExercises: [] };
-  const parsed = machineRecognitionSchema.safeParse(bad);
-  assert.equal(parsed.success, false);
+test('machineRecognitionSchema accepts empty possibleExercises (non-machine objects)', () => {
+  const nonMachine = {
+    ...mockValidResult(),
+    machineType: 'unknown' as const,
+    possibleExercises: [],
+    needsConfirmation: true,
+  };
+  const parsed = machineRecognitionSchema.safeParse(nonMachine);
+  assert.ok(parsed.success, 'schema should allow zero exercises');
 });
 
 test('recognizeMachine returns missing_image when imageUri is empty', async () => {
@@ -106,6 +111,54 @@ test('recognizeMachine returns provider_error when the provider throws', async (
 
 test('mockProvider refuses empty imageUri', async () => {
   await assert.rejects(() => mockProvider.recognize(''));
+});
+
+test('recognizeMachine remote without base URL returns provider_error', async () => {
+  const previousProvider = process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
+  const previousRecognitionUrl =
+    process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL;
+  const previousUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = 'remote';
+  delete process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL;
+  delete process.env.EXPO_PUBLIC_API_BASE_URL;
+  try {
+    const result = await recognizeMachine('file:///some-image.jpg');
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error.kind, 'provider_error');
+      assert.match(result.error.message, /EXPO_PUBLIC_RECOGNITION_API_BASE_URL/);
+    }
+  } finally {
+    if (previousProvider !== undefined) {
+      process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = previousProvider;
+    } else {
+      delete process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
+    }
+    if (previousRecognitionUrl !== undefined) {
+      process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL =
+        previousRecognitionUrl;
+    }
+    if (previousUrl !== undefined) {
+      process.env.EXPO_PUBLIC_API_BASE_URL = previousUrl;
+    }
+  }
+});
+
+test('an injected provider wins over the remote env configuration', async () => {
+  const previousProvider = process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
+  process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = 'remote';
+  try {
+    const result = await recognizeMachine('mock://image.jpg', {
+      provider: mockProvider,
+    });
+    assert.equal(result.ok, true);
+  } finally {
+    if (previousProvider !== undefined) {
+      process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = previousProvider;
+    } else {
+      delete process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
+    }
+  }
 });
 
 function mockExercise() {

@@ -554,3 +554,54 @@ Manual QA on iPhone (required):
 - No gray container on scan-result details or saved detail either.
 - Confidence pill on saved cards is visible (cream) on the white card.
 - Save/saved/delete flows and fallback unchanged.
+
+## Phase 7 — Real machine recognition backend provider
+
+Automated:
+
+- `src/features/machine-scan/api/recognize.test.ts`: schema accepts a
+  valid result, rejects out-of-range confidence, accepts empty
+  possibleExercises (non-machine objects); mock path unchanged; remote
+  mode without a base URL returns `provider_error`; an injected provider
+  wins over the remote env config.
+- `src/features/machine-scan/api/recognition-config.test.ts`: mock by
+  default, remote when configured, unknown values fall back to mock,
+  base URL falls back to `EXPO_PUBLIC_API_BASE_URL`.
+- `server/recognition/recognition-service.test.ts`: empty imageBase64 →
+  `invalid_input`; default provider is mock and satisfies the shared
+  schema; `disabled` → `recognition_disabled`; gemini without key →
+  `provider_error`; debug info never exposes the key.
+- `server/recognition/providers/gemini.test.ts` (injected fetch): valid
+  candidate accepted; `needsConfirmation` forced below 0.75;
+  out-of-enum machineType coerced to `unknown` and missing
+  uncertaintyReason defaulted to null; schema-invalid or non-JSON
+  candidates → `invalid_response`; non-2xx → `provider_error` with
+  providerStatus; fetch failure → `network_error`.
+
+Manual QA on iPhone (required):
+
+Mock mode (`EXPO_PUBLIC_RECOGNITION_PROVIDER=mock`,
+`RECOGNITION_PROVIDER=mock`):
+
+- Scan flow shows the stable mock "Presse à cuisses inclinée" as before.
+
+Remote mode (`EXPO_PUBLIC_RECOGNITION_PROVIDER=remote`,
+`EXPO_PUBLIC_RECOGNITION_API_BASE_URL=http://<IP_MAC>:3000`,
+`RECOGNITION_PROVIDER=gemini`, `GEMINI_API_KEY` set, then
+`npm run server:dev` + `npx expo start -c`):
+
+- A photo of a mouse/chair/phone is NOT labeled "Presse à cuisses
+  inclinée": machineType unknown-ish, needsConfirmation true, honest
+  uncertaintyReason, empty or minimal exercises.
+- A photo of a real gym machine returns a plausible French name and
+  description, coherent confidence, muscles and exercises.
+- needsConfirmation is true for ambiguous/low-confidence photos and the
+  "À confirmer" state shows on validation.
+- Details and save/saved detail display the real AI data (not the mock).
+- Backend stopped → readable error screen "Analyse impossible pour le
+  moment" with "Réessayer l'analyse" and "Reprendre la photo" (no silent
+  mock fallback).
+- Cutout pipeline unchanged: real cutout still generated and revealed;
+  cutout failure still falls back honestly.
+- `GET /api/machine-recognition/debug` shows provider/model and
+  hasGeminiApiKey=true without exposing the key.

@@ -269,9 +269,9 @@ Implementation (Phase 3):
   (`machineRecognitionSchema`, strict Zod).
 - Errors: `src/features/machine-scan/api/errors.ts`
   (`RecognitionResult` discriminated union with error kinds
-  `missing_image | invalid_response | provider_error`). The public
-  recognition API returns this typed result instead of throwing for
-  expected business errors.
+  `missing_image | invalid_response | provider_error | network_error`).
+  The public recognition API returns this typed result instead of
+  throwing for expected business errors.
 - Provider interface: `RecognitionProvider` in
   `src/features/machine-scan/api/mock-provider.ts`.
 - Public API: `recognizeMachine(imageUri, options?)` in
@@ -282,26 +282,51 @@ Implementation (Phase 3):
 
 Providers must be replaceable.
 
-Initial provider:
+### Real Recognition Backend (Phase 7)
 
-- Mock provider.
+Recognition runs server-side; the mobile app never holds an AI key.
 
-Next providers:
+Mobile side (`src/features/machine-scan/api/`):
 
-- Gemini Vision.
-- OpenAI Vision.
+- `recognition-config.ts`: reads `EXPO_PUBLIC_RECOGNITION_PROVIDER`
+  (`mock` default, `remote`; unknown values fall back to mock) and
+  `EXPO_PUBLIC_RECOGNITION_API_BASE_URL` (falls back to
+  `EXPO_PUBLIC_API_BASE_URL`).
+- `validate-recognition.ts`: shared Zod validation + conservative
+  confidence fix, used by both the mock and remote paths.
+- `remote-recognition-provider.ts`: reads the local photo as base64
+  (`expo-file-system` `File.base64()`), POSTs `{ imageBase64, mimeType }`
+  JSON to `${base URL}/api/machine-recognition` with a 30s timeout, and
+  validates the response with the strict shared schema. Lazy-imported by
+  `recognizeMachine` so tests run in plain Node. Expected failures map to
+  typed kinds: unreadable image → `missing_image`, backend down/timeout →
+  `network_error`, non-2xx → `provider_error`, bad JSON/schema →
+  `invalid_response`. Remote failures are shown to the user — they are
+  never silently replaced by mock data.
 
-Provider selection:
+Recognition backend (`server/recognition/`, same Node server as cutout):
 
-```txt
-EXPO_PUBLIC_AI_PROVIDER=mock | remote
-```
+- `types.ts`: `ServerRecognitionResult` typed union +
+  `RECOGNITION_PROVIDER` resolution (`mock` default, `gemini`,
+  `disabled`).
+- `recognition-service.ts`: input validation + provider dispatch +
+  safe debug info (`GET /api/machine-recognition/debug` reports
+  provider/model and key presence, never the key value).
+- `schema.ts`: re-exports the mobile Zod schema so both sides validate
+  the exact same contract.
+- `providers/mock.ts`: stable mock result for keyless end-to-end runs.
+- `providers/gemini.ts`: Gemini vision integration (`GEMINI_API_KEY`,
+  server-side only; `GEMINI_RECOGNITION_MODEL`, default
+  `gemini-3.1-flash-lite`). Sends the image inline with a French
+  system instruction and a structured-output JSON schema, Zod-validates
+  the candidate, coerces out-of-enum `machineType` to `unknown`, and
+  forces `needsConfirmation` below confidence 0.75. `fetch` is
+  injectable for tests.
 
-Remote backend selection:
-
-```txt
-AI_PROVIDER=mock | gemini | openai
-```
+Endpoint: `POST /api/machine-recognition` (base64 JSON in, flat
+validated `MachineRecognitionResult` out; typed error JSON with mapped
+status codes otherwise — `invalid_input` 400, `recognition_disabled`
+503, others 502).
 
 ## Recognition Flow
 

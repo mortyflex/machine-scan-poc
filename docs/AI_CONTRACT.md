@@ -130,9 +130,10 @@ recognizeMachine(imageUri)
 
 Error kinds exposed by the app:
 
-- `missing_image`: no `imageUri` provided.
+- `missing_image`: no `imageUri` provided or unreadable local file.
 - `invalid_response`: Zod validation failed.
-- `provider_error`: the provider threw or timed out.
+- `provider_error`: the provider threw, or the backend returned non-2xx.
+- `network_error`: the recognition backend is unreachable or timed out.
 
 These are returned by `recognizeMachine` as a typed
 `RecognitionResult` discriminated union in
@@ -200,6 +201,78 @@ Server provider selection (`server/.env`, never mobile):
 CUTOUT_PROVIDER=disabled | remove-bg
 REMOVE_BG_API_KEY=<secret, server-side only>
 ```
+
+## Phase 7 — Real machine recognition backend provider
+
+Decision:
+
+- mobile keeps mock recognition by default
+- remote recognition is handled by a backend endpoint
+- Gemini provider is server-only
+- the app sends imageBase64 to backend
+- backend returns a validated MachineRecognitionResult
+- no Gemini key is exposed to the mobile app
+- recognition errors are visible and never silently replaced by mock
+  data in remote mode
+
+Endpoint:
+
+```txt
+POST ${EXPO_PUBLIC_RECOGNITION_API_BASE_URL}/api/machine-recognition
+```
+
+Request (JSON):
+
+```json
+{
+  "imageBase64": "...",
+  "mimeType": "image/jpeg"
+}
+```
+
+Success response (200): a flat `MachineRecognitionResult` JSON object
+(validated server-side with the same Zod schema as the app, and
+re-validated app-side).
+
+Error response (400 / 502 / 503):
+
+```json
+{
+  "error": {
+    "kind": "invalid_input | recognition_disabled | provider_error | invalid_response | network_error",
+    "message": "..."
+  }
+}
+```
+
+Server provider selection (`server/.env`, never mobile):
+
+```txt
+RECOGNITION_PROVIDER=mock | gemini | disabled
+GEMINI_API_KEY=<secret, server-side only>
+GEMINI_RECOGNITION_MODEL=gemini-3.1-flash-lite
+```
+
+Mobile provider selection:
+
+```txt
+EXPO_PUBLIC_RECOGNITION_PROVIDER=mock | remote (default mock)
+EXPO_PUBLIC_RECOGNITION_API_BASE_URL=http://<host>:3000
+  (falls back to EXPO_PUBLIC_API_BASE_URL)
+```
+
+Server-side business rules (Gemini provider):
+
+- Non-machine objects are reported honestly: `machineType` falls back
+  to `unknown`, `possibleExercises` may be empty (the schema allows an
+  empty array since Phase 7), muscles stay empty.
+- `needsConfirmation` is forced to `true` when confidence < 0.75.
+- Out-of-enum `machineType` values are coerced to `unknown` instead of
+  failing the scan.
+- The Gemini key and the image payload are never logged.
+
+GET `/api/machine-recognition/debug` returns safe diagnostics
+(provider, model, `hasGeminiApiKey` boolean) and never the key value.
 
 ## Prompt
 
