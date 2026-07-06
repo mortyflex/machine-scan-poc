@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { notifySuccess, tapLight } from '@/shared/haptics';
 import { appFonts } from '@/shared/theme/typography';
 
 export type ScanValidationActionsProps = {
@@ -29,7 +30,10 @@ export function ScanValidationActions({
           styles.sideButton,
           pressed && styles.pressed,
         ]}
-        onPress={onRetake}
+        onPress={() => {
+          tapLight();
+          onRetake();
+        }}
         hitSlop={6}
       >
         <Ionicons name="camera-outline" size={19} color="#1A1A1A" />
@@ -41,7 +45,10 @@ export function ScanValidationActions({
           styles.confirmButton,
           pressed && styles.confirmPressed,
         ]}
-        onPress={onConfirm}
+        onPress={() => {
+          notifySuccess();
+          onConfirm();
+        }}
         hitSlop={6}
       >
         <View style={styles.confirmCheck}>
@@ -55,7 +62,10 @@ export function ScanValidationActions({
           styles.sideButton,
           pressed && styles.pressed,
         ]}
-        onPress={onReject}
+        onPress={() => {
+          tapLight();
+          onReject?.();
+        }}
         disabled={!onReject}
         hitSlop={6}
       >

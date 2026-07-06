@@ -911,6 +911,18 @@ applies to: scan-result details, saved detail, saved machines list
 intentionally warm/dark elsewhere: validation stage (#F8F8F5), camera
 ```
 
+Haptics (`src/shared/haptics.ts`, expo-haptics, fire-and-forget):
+
+```txt
+tapLight    → every pill button press (PrimaryButton onPressIn),
+              back buttons, camera cancel, retake/reject, carousel toggle
+tapMedium   → camera shutter, cutout dust reveal kick-in
+select      → tapping a saved machine card
+notifySuccess → validation confirm, save success, delete success
+notifyError   → save/delete/capture failures
+all helpers swallow errors — never break a flow without a haptic engine
+```
+
 Back navigation (`BackButton`):
 
 ```txt

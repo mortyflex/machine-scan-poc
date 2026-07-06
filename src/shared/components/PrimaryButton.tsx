@@ -7,6 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { tapLight } from '@/shared/haptics';
 import { useAppTheme } from '@/shared/theme';
 import { appFonts } from '@/shared/theme/typography';
 
@@ -29,6 +30,7 @@ export function PrimaryButton({
   variant = 'primary',
   style,
   disabled,
+  onPressIn,
   ...rest
 }: PrimaryButtonProps) {
   const theme = useAppTheme();
@@ -63,6 +65,10 @@ export function PrimaryButton({
         style,
       ]}
       disabled={disabled}
+      onPressIn={(event) => {
+        if (!disabled) tapLight();
+        onPressIn?.(event);
+      }}
       {...rest}
     >
       <Text style={[styles.label, { color: textColor }]}>{label}</Text>

@@ -14,6 +14,7 @@ import type {
   ExerciseDifficulty,
   MachineExercise,
 } from '@/features/machine-scan/types';
+import { tapLight } from '@/shared/haptics';
 import { radius, spacing, useAppTheme, type ColorToken } from '@/shared/theme';
 import { appFonts } from '@/shared/theme/typography';
 
@@ -47,7 +48,10 @@ export function ExerciseCarousel({ exercises }: ExerciseCarouselProps) {
     <View style={styles.container}>
       <Pressable
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-        onPress={() => setOpen((value) => !value)}
+        onPress={() => {
+          tapLight();
+          setOpen((value) => !value);
+        }}
         hitSlop={6}
       >
         <Text style={styles.buttonLabel}>Exercices possibles</Text>

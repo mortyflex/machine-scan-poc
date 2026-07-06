@@ -27,6 +27,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { tapMedium } from '@/shared/haptics';
 import { appFonts } from '@/shared/theme/typography';
 
 import { CutoutOrbitBeam } from './CutoutOrbitBeam';
@@ -120,6 +121,8 @@ export function SkiaCutoutStage({
   useEffect(() => {
     if (useRealCutout && !hasRevealed.current) {
       hasRevealed.current = true;
+      // Haptic beat as the dust reveal kicks in — the cutout moment.
+      tapMedium();
       revealProgress.value = withDelay(
         REVEAL_DELAY_MS,
         withTiming(1, {

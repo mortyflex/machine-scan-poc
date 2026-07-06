@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { tapLight } from '@/shared/haptics';
 import { appFonts } from '@/shared/theme/typography';
 
 export type BackButtonProps = {
@@ -34,7 +35,10 @@ export function BackButton({ label, onPress }: BackButtonProps) {
         label ? styles.withLabel : null,
         pressed && styles.pressed,
       ]}
-      onPress={handlePress}
+      onPress={() => {
+        tapLight();
+        handlePress();
+      }}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={label ?? 'Retour'}

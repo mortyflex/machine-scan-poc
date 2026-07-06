@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
+import { notifyError, tapLight, tapMedium } from '@/shared/haptics';
 import { appFonts } from '@/shared/theme/typography';
 
 type CaptureState =
@@ -44,12 +45,15 @@ export function CameraCapture() {
   const handleCapture = useCallback(async () => {
     const ref = cameraRef.current;
     if (!ref || !cameraReady) return;
+    // Shutter feedback the instant the user commits the shot.
+    tapMedium();
     setCapture({ status: 'capturing' });
     try {
       const picture: CameraCapturedPicture = await ref.takePictureAsync({
         quality: 0.8,
       });
       if (!picture?.uri) {
+        notifyError();
         setCapture({ status: 'error', message: 'Aucune image capturée.' });
         return;
       }
@@ -58,6 +62,7 @@ export function CameraCapture() {
         params: { imageUri: picture.uri },
       });
     } catch (error) {
+      notifyError();
       setCapture({
         status: 'error',
         message:
@@ -121,7 +126,10 @@ export function CameraCapture() {
         <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
           <Pressable
             style={styles.topButton}
-            onPress={() => router.replace('/')}
+            onPress={() => {
+              tapLight();
+              router.replace('/');
+            }}
             hitSlop={12}
           >
             <Text style={styles.topButtonText}>Annuler</Text>

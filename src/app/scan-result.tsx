@@ -35,6 +35,7 @@ import {
   PrimaryButton,
   Screen,
 } from '@/shared/components';
+import { notifyError, notifySuccess } from '@/shared/haptics';
 import { spacing } from '@/shared/theme';
 
 type ScanState =
@@ -440,12 +441,17 @@ function SaveBlock({
     saveMachineScan(toMachineScanInput(data, imageUri, cutoutUri))
       .then((result) => {
         if (result.ok) {
+          notifySuccess();
           setState({ status: 'saved', id: result.data.id });
         } else {
+          notifyError();
           setState({ status: 'error' });
         }
       })
-      .catch(() => setState({ status: 'error' }));
+      .catch(() => {
+        notifyError();
+        setState({ status: 'error' });
+      });
   };
 
   if (state.status === 'saved') {

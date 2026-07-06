@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { MachineScan } from '@/features/machine-scan/types';
 import { AppText, Card } from '@/shared/components';
+import { select } from '@/shared/haptics';
 import { radius, spacing } from '@/shared/theme';
 
 export type SavedMachineCardProps = {
@@ -17,7 +18,10 @@ export function SavedMachineCard({ machine }: SavedMachineCardProps) {
 
   return (
     <Pressable
-      onPress={() => router.push({ pathname: '/machine/[id]', params: { id: machine.id } })}
+      onPress={() => {
+        select();
+        router.push({ pathname: '/machine/[id]', params: { id: machine.id } });
+      }}
       style={({ pressed }) => pressed && { opacity: 0.85 }}
     >
       <Card style={styles.card}>

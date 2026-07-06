@@ -26,6 +26,7 @@ import {
   PrimaryButton,
   Screen,
 } from '@/shared/components';
+import { notifyError, notifySuccess } from '@/shared/haptics';
 import { spacing, useAppTheme } from '@/shared/theme';
 
 type DetailState =
@@ -78,12 +79,17 @@ export default function MachineDetailScreen() {
     deleteMachineScan(id)
       .then((result) => {
         if (result.ok) {
+          notifySuccess();
           router.replace('/saved-machines');
         } else {
+          notifyError();
           setDeleteState('error');
         }
       })
-      .catch(() => setDeleteState('error'));
+      .catch(() => {
+        notifyError();
+        setDeleteState('error');
+      });
   }, [id, router]);
 
   if (state.status === 'loading') {
