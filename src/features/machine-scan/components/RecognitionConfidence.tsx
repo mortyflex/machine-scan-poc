@@ -37,15 +37,7 @@ export function RecognitionConfidence({
       </View>
 
       {lowConfidence && (
-        <View
-          style={[
-            styles.badge,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.danger,
-            },
-          ]}
-        >
+        <View style={styles.badge}>
           <AppText variant="caption" color="danger">
             À confirmer
           </AppText>
@@ -75,7 +67,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
-    borderWidth: 1,
+    backgroundColor: '#FDECEC',
   },
   pill: {
     paddingVertical: 6,

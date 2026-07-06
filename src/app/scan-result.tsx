@@ -28,7 +28,13 @@ import type {
   MachineRecognitionResult,
   MachineType,
 } from '@/features/machine-scan/types';
-import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
+import {
+  AppText,
+  Card,
+  PremiumDottedBackground,
+  PrimaryButton,
+  Screen,
+} from '@/shared/components';
 import { spacing } from '@/shared/theme';
 
 type ScanState =
@@ -297,9 +303,11 @@ function DetailsStage({
 }) {
   return (
     <Screen>
+      <PremiumDottedBackground />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <AppText variant="title">Résultat du scan</AppText>
 

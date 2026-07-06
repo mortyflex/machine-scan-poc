@@ -1,8 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
-
-import { appFonts } from '@/shared/theme/typography';
+import { StyleSheet, View } from 'react-native';
 
 import { SkiaCutoutStage } from './SkiaCutoutStage';
+import { StickerMachineTitle } from './StickerMachineTitle';
 
 export type CutoutDisplayStageProps = {
   imageUri: string;
@@ -26,7 +25,7 @@ export type CutoutDisplayStageProps = {
 export function CutoutDisplayStage({
   imageUri,
   cutoutUri,
-  height = 420,
+  height = 460,
   machineName,
   machineSubtitle,
 }: CutoutDisplayStageProps) {
@@ -40,15 +39,11 @@ export function CutoutDisplayStage({
           variant="details"
         />
         {machineName ? (
-          <View style={styles.stickerLabel}>
-            <Text style={styles.stickerName} numberOfLines={2}>
-              {machineName}
-            </Text>
-            {machineSubtitle ? (
-              <Text style={styles.stickerSubtitle} numberOfLines={1}>
-                {machineSubtitle}
-              </Text>
-            ) : null}
+          <View style={styles.titleZone}>
+            <StickerMachineTitle
+              title={machineName}
+              subtitle={machineSubtitle}
+            />
           </View>
         ) : null}
       </View>
@@ -70,41 +65,13 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 36,
-    borderWidth: 1,
-    borderColor: 'rgba(230,220,190,0.45)',
     overflow: 'hidden',
   },
-  stickerLabel: {
+  titleZone: {
     position: 'absolute',
-    bottom: 16,
-    alignSelf: 'center',
-    maxWidth: '88%',
+    bottom: 14,
+    left: 16,
+    right: 16,
     alignItems: 'center',
-    gap: 2,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 24,
-    paddingHorizontal: 22,
-    paddingVertical: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    elevation: 6,
-    transform: [{ rotate: '-1.2deg' }],
-  },
-  stickerName: {
-    color: '#111111',
-    fontFamily: appFonts.headingStrong,
-    fontSize: 25,
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-  stickerSubtitle: {
-    color: '#666666',
-    fontFamily: appFonts.body,
-    fontSize: 15,
-    textAlign: 'center',
   },
 });

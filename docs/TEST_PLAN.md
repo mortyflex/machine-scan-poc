@@ -463,3 +463,38 @@ Manual QA on iPhone (required):
   home, camera overlay, validation, details, saved screens.
 - App still boots and renders if fonts fail to load (system fallback).
 - Save, saved list, saved detail, old entries without `cutoutUri` intact.
+
+## Phase 6.6.8 — Premium details page and exercise carousel
+
+QA finding:
+
+- details page still showed a narrow gray-feeling layout and visible
+  scroll indicator
+- cards should use full-device premium background and shadow instead of
+  borders
+- machine title should use a sticker-style treatment inspired by
+  `typo.png`
+- details cutout should be larger for future gym machines
+- exercise list should become a premium button and swipable card carousel
+- destructive/back actions should be redesigned as premium buttons
+
+Manual QA on iPhone (required):
+
+- No vertical scrollbar on details / saved detail while scrolling; no
+  horizontal indicator in the exercise carousel.
+- Details background is a full-width warm white with a subtle dotted
+  grid — no narrow gray container feeling.
+- Cards read through shadows only: no visible borders on summary,
+  muscles, exercise cards, chips, or buttons.
+- Machine title in the hero card matches the typo.png sticker style:
+  chunky dark-blue rounded bold with a thick white outline following the
+  letters; long names wrap to two lines without clipping.
+- Details cutout is larger (92% of a 460 px hero) and suits big objects.
+- "Exercices possibles" is a graphite pill button with a count badge;
+  tapping expands a horizontally swipable card carousel with snap.
+- "Supprimer cette machine" is a pale-red premium pill, "Retour à la
+  liste" a graphite pill; delete still works (confirmation flow as
+  before, list refreshes).
+- Fallback without cutout: photo card, no sticker title lying on the
+  photo, name stays in the info card.
+- Save, saved list, saved detail, old entries without `cutoutUri` intact.

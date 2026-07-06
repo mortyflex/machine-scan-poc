@@ -7,7 +7,7 @@ import type {
 } from '@/features/machine-scan/types';
 import { spacing } from '@/shared/theme';
 
-import { ExerciseList } from './ExerciseList';
+import { ExerciseCarousel } from './ExerciseCarousel';
 import { MuscleTags } from './MuscleTags';
 import { RecognitionConfidence } from './RecognitionConfidence';
 
@@ -30,8 +30,9 @@ export const machineTypeLabels: Record<MachineType, string> = {
 };
 
 /**
- * Details information block (Phase 6.6.7): three premium cards instead of
- * one gray slab — summary (confidence + description), muscles, exercises.
+ * Details information block (Phase 6.6.8): premium sections on the warm
+ * page — summary card (confidence + description), muscles card, and the
+ * exercises pill button that expands into a swipable card carousel.
  */
 export function MachineResultCard({ result, hideName }: MachineResultCardProps) {
   return (
@@ -69,9 +70,7 @@ export function MachineResultCard({ result, hideName }: MachineResultCardProps) 
         />
       </Card>
 
-      <Card style={styles.card}>
-        <ExerciseList exercises={result.possibleExercises} />
-      </Card>
+      <ExerciseCarousel exercises={result.possibleExercises} />
     </View>
   );
 }

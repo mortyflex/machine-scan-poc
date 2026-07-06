@@ -25,13 +25,7 @@ export function MuscleTags({
           {primaryMuscles.map((muscle) => (
             <View
               key={muscle}
-              style={[
-                styles.tag,
-                {
-                  backgroundColor: theme.colors.primary,
-                  borderColor: theme.colors.primary,
-                },
-              ]}
+              style={[styles.tag, { backgroundColor: theme.colors.primary }]}
             >
               <AppText variant="caption" color="primaryText">
                 {muscle}
@@ -48,17 +42,10 @@ export function MuscleTags({
           </AppText>
           <View style={styles.tags}>
             {secondaryMuscles.map((muscle) => (
-              <View
-                key={muscle}
-                style={[
-                  styles.tag,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.surfaceBorder,
-                  },
-                ]}
-              >
-                <AppText variant="caption">{muscle}</AppText>
+              <View key={muscle} style={[styles.tag, styles.secondaryTag]}>
+                <AppText variant="caption" style={styles.secondaryTagText}>
+                  {muscle}
+                </AppText>
               </View>
             ))}
           </View>
@@ -80,10 +67,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
+  // Premium chips (Phase 6.6.8): no borders — graphite for primary,
+  // warm cream for secondary, both identified by fill, not outline.
   tag: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     borderRadius: radius.pill,
-    borderWidth: 1,
+  },
+  secondaryTag: {
+    backgroundColor: '#F5F2E9',
+  },
+  secondaryTagText: {
+    color: '#4A463C',
   },
 });

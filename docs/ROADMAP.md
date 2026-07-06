@@ -265,6 +265,46 @@ Delivered:
   (now premium pill with shadow).
 - Fallback, save/saved flows and debug-free UI unchanged.
 
+## Phase 6.6.8 — Premium details page and exercise carousel
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding:
+
+- details page still showed a narrow gray-feeling layout and visible
+  scroll indicator
+- cards should use full-device premium background and shadow instead of
+  borders
+- machine title should use a sticker-style treatment inspired by
+  `typo.png`
+- details cutout should be larger for future gym machines
+- exercise list should become a premium button and swipable card carousel
+- destructive/back actions should be redesigned as premium buttons
+
+Delivered:
+
+- Scroll indicators hidden on details/saved-detail and in the exercise
+  carousel.
+- New `PremiumDottedBackground` (shared): warm #FAFAF7 base + subtle
+  dotted grid behind the whole details/saved-detail pages.
+- Cards borderless: shared `Card` now relies on relief only (radius 28,
+  shadow 0.10/22/y12), light surface switched to pure white; muscle
+  chips and confidence badge lost their outlines (fill-based).
+- New `StickerMachineTitle`: typo.png-style title — Plus Jakarta Sans
+  ExtraBold 27 in deep blue #223247 with a thick text-hugging white
+  outline (12 offset copies) and soft diffuse shadow, two-line capable;
+  replaces the pill label in the hero card.
+- Details hero grown to 460 px; cutout destination 92% height with a
+  4% horizontal bleed and a reserved title zone at the bottom.
+- New `ExerciseCarousel`: graphite pill button (count badge + chevron)
+  expanding into a horizontal snap carousel of premium exercise cards
+  (78% width, borderless, truncated fields); replaces the plain list in
+  details.
+- `PrimaryButton`: borderless premium pills — new `danger` variant (pale
+  red bg #FDECEC / deep red text) used by "Supprimer cette machine";
+  ghost is now a soft white pill with light shadow.
+- Fallback, save/saved/delete flows and debug-free UI unchanged.
+
 Next phase:
 
 ```txt

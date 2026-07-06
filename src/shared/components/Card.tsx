@@ -10,10 +10,7 @@ export function Card({ style, children, ...rest }: CardProps) {
     <View
       style={[
         styles.card,
-        {
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.surfaceBorder,
-        },
+        { backgroundColor: theme.colors.surface },
         style,
       ]}
       {...rest}
@@ -23,15 +20,16 @@ export function Card({ style, children, ...rest }: CardProps) {
   );
 }
 
+// Premium cards (Phase 6.6.8): no visible border — the card reads through
+// its relief (soft deep shadow) on the warm page background.
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 26,
-    borderWidth: 1,
+    borderRadius: 28,
     padding: 20,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 22,
+    elevation: 5,
   },
 });

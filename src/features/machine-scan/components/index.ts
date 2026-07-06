@@ -19,6 +19,10 @@ export {
   type CutoutDebugPanelProps,
   type CutoutDebugStatus,
 } from './CutoutDebugPanel';
+export {
+  ExerciseCarousel,
+  type ExerciseCarouselProps,
+} from './ExerciseCarousel';
 export { ExerciseList, type ExerciseListProps } from './ExerciseList';
 export {
   MachineResultCard,
@@ -53,3 +57,7 @@ export {
   SkiaCutoutStage,
   type SkiaCutoutStageProps,
 } from './SkiaCutoutStage';
+export {
+  StickerMachineTitle,
+  type StickerMachineTitleProps,
+} from './StickerMachineTitle';

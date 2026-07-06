@@ -12,10 +12,18 @@ import { appFonts } from '@/shared/theme/typography';
 
 export type PrimaryButtonProps = Omit<PressableProps, 'style'> & {
   label: string;
-  variant?: 'primary' | 'ghost';
+  variant?: 'primary' | 'ghost' | 'danger';
   style?: StyleProp<ViewStyle>;
 };
 
+const DANGER_BG = '#FDECEC';
+const DANGER_TEXT = '#B42318';
+
+/**
+ * Premium pill buttons (Phase 6.6.8): no visible borders anywhere —
+ * primary is graphite with a drop shadow, ghost is a soft white pill with
+ * a light shadow, danger is a pale red pill with deep red text.
+ */
 export function PrimaryButton({
   label,
   variant = 'primary',
@@ -24,31 +32,31 @@ export function PrimaryButton({
   ...rest
 }: PrimaryButtonProps) {
   const theme = useAppTheme();
-  const isPrimary = variant === 'primary';
-  const backgroundColor = disabled
-    ? theme.colors.surfaceBorder
-    : isPrimary
-      ? theme.colors.primary
-      : 'transparent';
-  const textColor = disabled
-    ? theme.colors.textMuted
-    : isPrimary
-      ? theme.colors.primaryText
-      : theme.colors.text;
-  const borderColor = disabled
-    ? theme.colors.surfaceBorder
-    : isPrimary
-      ? theme.colors.primary
-      : theme.colors.surfaceBorder;
+
+  let backgroundColor: string;
+  let textColor: string;
+  if (disabled) {
+    backgroundColor = theme.colors.surfaceBorder;
+    textColor = theme.colors.textMuted;
+  } else if (variant === 'primary') {
+    backgroundColor = theme.colors.primary;
+    textColor = theme.colors.primaryText;
+  } else if (variant === 'danger') {
+    backgroundColor = DANGER_BG;
+    textColor = DANGER_TEXT;
+  } else {
+    backgroundColor = theme.colors.surface;
+    textColor = theme.colors.text;
+  }
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.base,
-        isPrimary && !disabled && styles.primaryShadow,
+        !disabled &&
+          (variant === 'primary' ? styles.primaryShadow : styles.softShadow),
         {
           backgroundColor,
-          borderColor,
           opacity: pressed && !disabled ? 0.85 : 1,
         },
         pressed && !disabled && styles.pressed,
@@ -66,7 +74,6 @@ const styles = StyleSheet.create({
   base: {
     height: 56,
     borderRadius: 999,
-    borderWidth: 1,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -77,6 +84,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 5,
+  },
+  softShadow: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   pressed: {
     transform: [{ scale: 0.98 }],

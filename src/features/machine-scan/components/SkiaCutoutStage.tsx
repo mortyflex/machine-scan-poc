@@ -496,12 +496,12 @@ function computeLayout(
 
   // Object area: the cutout is the star of the screen — very large,
   // centered, never distorted (fit contain does the letterboxing). The
-  // details hero pushes the object slightly up to leave room for the
-  // sticker name label pinned near the bottom of the card.
-  const objH = h * (isDetails ? 0.9 : 0.74);
-  const objW = w * (isDetails ? 1 : 0.96);
+  // details hero lets the destination bleed slightly past the card width
+  // and pushes the object up to reserve the sticker-title zone below.
+  const objH = h * (isDetails ? 0.92 : 0.74);
+  const objW = w * (isDetails ? 1.04 : 0.96);
   const objX = (w - objW) / 2;
-  const objY = cy - objH / 2 - h * (isDetails ? 0.03 : 0.015);
+  const objY = cy - objH / 2 - h * (isDetails ? 0.05 : 0.015);
 
   // Glow centered on the object zone
   const glowR = Math.min(w, h) * 0.58;

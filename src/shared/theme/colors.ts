@@ -20,7 +20,7 @@ export type ColorToken = keyof ThemeColors;
 
 export const lightColors: ThemeColors = {
   background: '#FFFFFF',
-  surface: '#F5F6F8',
+  surface: '#FFFFFF',
   surfaceBorder: '#E4E6EA',
   text: '#111418',
   textSecondary: '#5B6168',

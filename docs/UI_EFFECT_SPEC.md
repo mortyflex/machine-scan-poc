@@ -769,3 +769,70 @@ loaded via expo-font in the root layout; on load error the app renders
 with system fallback (no crash, no block)
 tokens centralized in src/shared/theme/typography.ts (appFonts)
 ```
+
+## Phase 6.6.8 — Premium details page and exercise carousel
+
+QA finding:
+
+- details page still showed a narrow gray-feeling layout and visible
+  scroll indicator
+- cards should use full-device premium background and shadow instead of
+  borders
+- machine title should use a sticker-style treatment inspired by
+  `typo.png`
+- details cutout should be larger for future gym machines
+- exercise list should become a premium button and swipable card carousel
+- destructive/back actions should be redesigned as premium buttons
+
+Page background (`PremiumDottedBackground`, details + saved detail):
+
+```txt
+base #FAFAF7, dots rgba(60,55,40,0.07), r 1.2 px, spacing 28 px
+static Skia canvas, absolute fill behind the scroll content
+scroll indicators hidden everywhere on these pages
+```
+
+Cards:
+
+```txt
+no borders anywhere — relief only
+shared Card: white, radius 28, shadow 0.10 / radius 22 / y 12
+chips: graphite fill (primary muscles), cream #F5F2E9 fill (secondary)
+confidence "À confirmer" badge: pale red fill, no outline
+```
+
+Sticker title (`StickerMachineTitle`, typo.png reference):
+
+```txt
+Plus Jakarta Sans ExtraBold 27/33, deep blue #223247
+thick white outline hugging the glyphs: 12 offset text copies (±4/±3/±2)
+soft diffuse shadow on the outline layer, no plaque rectangle, no pill
+subtitle Inter Medium 15 with white legibility halo
+numberOfLines 2, centered, pinned in a reserved zone at the hero bottom
+```
+
+Details hero (updated):
+
+```txt
+height 460 px; cutout 92% of stage height, 104% width bleed
+object nudged up 5% to clear the title zone
+```
+
+Exercises (`ExerciseCarousel`):
+
+```txt
+collapsed: graphite pill button "Exercices possibles" + yellow count
+badge + chevron, shadow, press scale
+expanded: horizontal snap carousel (card width ~78%, max 320 px,
+gap 14, decelerationRate fast, no scroll indicator)
+cards: white, radius 28, shadow, name + difficulty fill badge,
+Installation (3 lines) / Exécution (4 lines) / first mistake & safety
+```
+
+Actions (saved detail):
+
+```txt
+Retour à la liste: graphite primary pill
+Supprimer cette machine: danger pill #FDECEC bg / #B42318 text,
+soft shadow, no border
+```

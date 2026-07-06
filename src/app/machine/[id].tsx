@@ -18,7 +18,13 @@ import {
   getMachineScanById,
 } from '@/features/machine-scan/storage';
 import type { MachineScan } from '@/features/machine-scan/types';
-import { AppText, Card, PrimaryButton, Screen } from '@/shared/components';
+import {
+  AppText,
+  Card,
+  PremiumDottedBackground,
+  PrimaryButton,
+  Screen,
+} from '@/shared/components';
 import { spacing, useAppTheme } from '@/shared/theme';
 
 type DetailState =
@@ -130,9 +136,11 @@ export default function MachineDetailScreen() {
 
   return (
     <Screen>
+      <PremiumDottedBackground />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         {scan.cutoutUri ? (
           <CutoutDisplayStage
@@ -167,17 +175,17 @@ export default function MachineDetailScreen() {
           </AppText>
         ) : null}
         <View style={styles.actions}>
+          <Link href="/saved-machines" replace asChild>
+            <PrimaryButton label="Retour à la liste" />
+          </Link>
           <PrimaryButton
             label={
               deleteState === 'deleting' ? 'Suppression…' : 'Supprimer cette machine'
             }
             onPress={handleDelete}
             disabled={deleteState === 'deleting'}
-            variant="ghost"
+            variant="danger"
           />
-          <Link href="/saved-machines" replace asChild>
-            <PrimaryButton label="Retour à la liste" />
-          </Link>
         </View>
       </ScrollView>
     </Screen>
