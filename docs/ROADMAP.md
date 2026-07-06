@@ -353,11 +353,13 @@ QA finding:
 
 Delivered:
 
-- `StickerMachineTitle` restored as a real sticker: two stacked white
-  plates at slightly different rotations (−1.2° wrap, +2.4° backing with
-  negative insets) form an organic die-cut blob with natively smooth
-  corners — no pixelated text-copy outline; title Plus Jakarta Sans
-  ExtraBold 28 in #203040 with a soft white halo, subtitle inside.
+- `StickerMachineTitle` restored per QA: the contour hugs the letters
+  again (the approved look), with NO plate — 24 white text copies
+  sampled on two true circles (r 6/3.2) feathered by white textShadows
+  form a thicker, perfectly smooth ~6 px outline; soft drop shadow from
+  blurred transparent copies; title Plus Jakarta Sans ExtraBold 28 in
+  #203040, subtitle plain below. (An intermediate plate-based version
+  was rejected in QA for losing the sticker-text effect.)
 - Saved machines list rebuilt on the premium stage: unpadded Screen +
   full-bleed `PremiumDottedBackground`, scrolling FlatList (was
   scroll-disabled) with hidden indicator, states/empty on the clean

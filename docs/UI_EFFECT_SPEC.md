@@ -882,17 +882,21 @@ QA finding:
   and shadow-based cards
 - secondary menu screens need premium back navigation
 
-Sticker title (current):
+Sticker title (current — QA correction: the owner wants the contour to
+hug the letters, no plate/pill of any kind):
 
 ```txt
-organic die-cut sticker, never pixelated:
-  wrap: max width 92%, tilt −1.2°
-  backing plate: white, radius 34, insets −12 h / −5 v, rotated +2.4°
-                 (corners peek out around the main plate = organic blob)
-  main plate: white, radius 26, padding 22×12, shadow 0.16/16/y10
-  title: Plus Jakarta Sans ExtraBold 28/33, #203040, 2 lines max,
-         soft white halo (textShadow radius 4)
-  subtitle inside: Inter Medium 15, #5F6B78
+text-hugging white outline, thicker and smoother than 6.6.8:
+  24 white text copies sampled on two true circles (r 6 × 16 samples,
+  r 3.2 × 10 samples) — even ~6 px contour all around the glyphs
+  each copy feathered with a white textShadow (radius 2.5) so the
+  stamps merge into one smooth rounded edge, no jagged steps
+  3 transparent copies with a blurred dark textShadow give the soft
+  drop shadow — still no backing rectangle
+  title: Plus Jakarta Sans ExtraBold 28/34, #203040, 2 lines max
+  subtitle below (no outline): Inter Medium 16 with white legibility halo
+drawn directly over the hero background, exactly like the approved
+07:14 QA screenshot, just thicker and smoother
 used in the details hero (scan-result + saved detail); no duplication in
 the summary card; never shown over the photo fallback
 ```
