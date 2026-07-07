@@ -17,6 +17,7 @@ const MACHINE_TYPES = [
   'free_weight_station',
   'cardio_machine',
   'unknown',
+  'not_sport_equipment',
 ] as const;
 
 const DIFFICULTIES = ['débutant', 'intermédiaire', 'avancé'] as const;
@@ -24,12 +25,21 @@ const DIFFICULTIES = ['débutant', 'intermédiaire', 'avancé'] as const;
 const SYSTEM_INSTRUCTION = `Tu es un assistant de reconnaissance de machines de musculation.
 Analyse l'image fournie.
 Retourne uniquement un JSON strict correspondant au schéma demandé.
-Si l'image ne montre pas clairement une machine de musculation, un accessoire de sport, ou un objet identifiable, indique needsConfirmation=true et explique l'incertitude dans uncertaintyReason.
-Si l'objet n'est pas une machine de musculation, dis-le honnêtement : machineType="unknown", confidence basse, possibleExercises vide.
+isSportMachine indique si l'objet est une machine de sport, un équipement de sport, ou un accessoire d'entraînement exploitable (machine de musculation, banc, haltère, kettlebell, poulie, rameur, vélo elliptique, tapis de course, barre guidée...).
+Retourne isSportMachine=false si l'image ne montre pas clairement un tel équipement.
+Ne force jamais une machine de musculation à partir d'une souris, d'une chaise, d'un téléphone, d'un meuble, d'un animal, ou d'un objet du quotidien.
+Si isSportMachine=false :
+- machineName doit nommer honnêtement l'objet (par exemple "Souris d'ordinateur") ou dire "Objet non sportif"
+- machineType doit être "not_sport_equipment"
+- confidence indique la confiance sur l'identification de l'objet
+- needsConfirmation doit être true
+- possibleExercises doit être []
+- primaryMuscles doit être []
+- secondaryMuscles doit être []
+- uncertaintyReason doit expliquer que ce n'est pas une machine de sport
 N'invente jamais une machine précise (par exemple "presse à cuisses") si l'image montre autre chose (souris, chaise, téléphone...).
 confidence doit être un nombre entre 0 et 1.
 needsConfirmation doit être true si confidence < 0.75 ou si l'image est ambiguë.
-primaryMuscles et secondaryMuscles doivent être vides si ce n'est pas une machine de musculation.
 Ne donne pas de conseils médicaux.
 Ne recommande pas de charges précises.
 Ne crée pas d'exercices dangereux ou impossibles.
@@ -45,6 +55,7 @@ const GEMINI_RESPONSE_SCHEMA = {
   properties: {
     machineName: { type: 'STRING' },
     machineType: { type: 'STRING', enum: [...MACHINE_TYPES] },
+    isSportMachine: { type: 'BOOLEAN' },
     confidence: { type: 'NUMBER' },
     description: { type: 'STRING' },
     primaryMuscles: { type: 'ARRAY', items: { type: 'STRING' } },
@@ -78,6 +89,7 @@ const GEMINI_RESPONSE_SCHEMA = {
   required: [
     'machineName',
     'machineType',
+    'isSportMachine',
     'confidence',
     'description',
     'primaryMuscles',
@@ -100,7 +112,9 @@ function toSafePreview(text: string): string {
 /**
  * Pre-Zod normalization of the model output. Keeps benign drift from
  * failing the whole scan: a missing uncertaintyReason becomes null and
- * an out-of-enum machineType becomes "unknown".
+ * an out-of-enum machineType becomes "unknown". A missing
+ * isSportMachine is deliberately NOT defaulted: the response must then
+ * fail Zod validation, forcing the Phase 7.3 contract.
  */
 function normalizeCandidate(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
@@ -322,8 +336,22 @@ export async function geminiRecognition(
       'Confiance insuffisante pour une identification certaine.';
   }
 
+  // Phase 7.3 business rule: a non-machine result never leaves the
+  // server with usable exercises or muscles, even if the model filled
+  // them despite the prompt.
+  if (!result.isSportMachine) {
+    result.needsConfirmation = true;
+    result.possibleExercises = [];
+    result.primaryMuscles = [];
+    result.secondaryMuscles = [];
+    result.uncertaintyReason =
+      result.uncertaintyReason ??
+      "L'objet détecté n'est pas une machine ou un équipement de sport.";
+  }
+
   console.log('[gemini-recognition] success', {
     machineType: result.machineType,
+    isSportMachine: result.isSportMachine,
     confidence: result.confidence,
     needsConfirmation: result.needsConfirmation,
     exercises: result.possibleExercises.length,

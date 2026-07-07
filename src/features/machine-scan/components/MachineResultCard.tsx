@@ -27,6 +27,7 @@ export const machineTypeLabels: Record<MachineType, string> = {
   free_weight_station: 'Poste poids libres',
   cardio_machine: 'Cardio',
   unknown: 'Type inconnu',
+  not_sport_equipment: 'Objet non sportif',
 };
 
 /**

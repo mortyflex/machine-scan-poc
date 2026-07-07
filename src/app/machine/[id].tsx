@@ -170,6 +170,9 @@ export default function MachineDetailScreen() {
           result={{
             machineName: scan.machineName,
             machineType: scan.machineType,
+            // Saved scans are always sport machines (non-machines are
+            // blocked before save), including pre-7.3 records.
+            isSportMachine: true,
             confidence: scan.confidence,
             description: scan.description,
             primaryMuscles: scan.primaryMuscles,

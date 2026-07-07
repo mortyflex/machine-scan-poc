@@ -23,6 +23,7 @@ Given a photo of a gym machine, return a strict JSON object describing the machi
 {
   "machineName": "Presse à cuisses inclinée",
   "machineType": "lower_body_machine",
+  "isSportMachine": true,
   "confidence": 0.87,
   "description": "Machine guidée pour travailler principalement les quadriceps, les fessiers et les ischio-jambiers.",
   "primaryMuscles": ["quadriceps", "fessiers"],
@@ -73,6 +74,31 @@ Examples:
 - free_weight_station
 - cardio_machine
 - unknown
+- not_sport_equipment (Phase 7.3: the photo shows an everyday object,
+  not usable gym equipment)
+
+### isSportMachine
+
+Boolean, required since Phase 7.3. A provider response without it is
+invalid — the server rejects it, there is no default for fresh AI
+responses.
+
+- `true`: the object is a gym machine or a usable training accessory
+  (weight machine, bench, dumbbell, kettlebell, cable station, rower,
+  elliptical, treadmill, smith machine…).
+- `false`: the object is not sport-related or not usable as equipment
+  (mouse, office chair, phone, bottle, computer, keyboard, decorative
+  object, person alone, unusable blurry photo…).
+
+When `false`, the result is normalized (server-side and app-side):
+`needsConfirmation = true`, `possibleExercises = []`,
+`primaryMuscles = []`, `secondaryMuscles = []`, and the app blocks
+validation and save entirely.
+
+Backward compatibility: old saved records predate the field. They can
+only exist because they passed validation, so the storage mapping
+restores `isSportMachine: true` when reading them. This default never
+applies to fresh provider responses.
 
 ### confidence
 
@@ -263,16 +289,37 @@ EXPO_PUBLIC_RECOGNITION_API_BASE_URL=http://<host>:3000
 
 Server-side business rules (Gemini provider):
 
-- Non-machine objects are reported honestly: `machineType` falls back
-  to `unknown`, `possibleExercises` may be empty (the schema allows an
-  empty array since Phase 7), muscles stay empty.
+- Non-machine objects are reported honestly: `isSportMachine = false`,
+  `machineType = "not_sport_equipment"`, `possibleExercises` may be
+  empty (the schema allows an empty array since Phase 7), muscles stay
+  empty.
 - `needsConfirmation` is forced to `true` when confidence < 0.75.
+- Phase 7.3: when `isSportMachine = false`, the server clears
+  `possibleExercises`, `primaryMuscles`, `secondaryMuscles` and forces
+  `needsConfirmation = true`, even if the model filled them.
+- A response missing `isSportMachine` fails validation
+  (`invalid_response`) — it is never defaulted.
 - Out-of-enum `machineType` values are coerced to `unknown` instead of
   failing the scan.
 - The Gemini key and the image payload are never logged.
 
 GET `/api/machine-recognition/debug` returns safe diagnostics
 (provider, model, `hasGeminiApiKey` boolean) and never the key value.
+
+## Phase 7.3 — Not-machine recognition guard
+
+QA finding:
+
+- Gemini can correctly identify non-gym objects, but the app still
+  allowed validation.
+
+Decision:
+
+- recognition contract now includes `isSportMachine`
+- non-sport objects cannot be validated or saved
+- UI shows a dedicated state with Refaire / Annuler
+- server normalizes non-machine results by clearing muscles and
+  exercises
 
 ## Prompt
 
@@ -286,6 +333,7 @@ Réponds uniquement en JSON valide avec ce schéma :
 {
   "machineName": string,
   "machineType": string,
+  "isSportMachine": boolean,
   "confidence": number,
   "description": string,
   "primaryMuscles": string[],
@@ -306,6 +354,9 @@ Réponds uniquement en JSON valide avec ce schéma :
 }
 
 Règles :
+- Retourne isSportMachine=false si l'image ne montre pas clairement une machine de sport, un équipement de sport, ou un accessoire d'entraînement exploitable.
+- Ne force jamais une machine de musculation à partir d'une souris, d'une chaise, d'un téléphone, d'un meuble, d'un animal, ou d'un objet du quotidien.
+- Si isSportMachine=false : machineName nomme honnêtement l'objet ou dit "Objet non sportif", machineType="not_sport_equipment", needsConfirmation=true, possibleExercises=[], primaryMuscles=[], secondaryMuscles=[], et uncertaintyReason explique que ce n'est pas une machine de sport.
 - Si la machine n'est pas identifiable avec confiance, mets needsConfirmation à true.
 - Si plusieurs machines sont visibles et qu'il est impossible de savoir laquelle est le sujet principal, mets needsConfirmation à true.
 - Si l'image ne montre pas une machine de salle de sport, mets needsConfirmation à true.
@@ -323,6 +374,7 @@ Use this result for local development:
 {
   "machineName": "Presse à cuisses inclinée",
   "machineType": "lower_body_machine",
+  "isSportMachine": true,
   "confidence": 0.91,
   "description": "Machine guidée permettant de travailler principalement les quadriceps, les fessiers et les ischio-jambiers avec un mouvement de poussée des jambes.",
   "primaryMuscles": ["quadriceps", "fessiers"],

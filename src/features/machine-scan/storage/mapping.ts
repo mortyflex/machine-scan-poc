@@ -35,6 +35,10 @@ export function toRecognitionResult(
   scan: MachineScan,
 ): MachineRecognitionResult {
   return {
+    // Phase 7.3 backward compat: non-machines can never be saved, so
+    // every stored record (including pre-7.3 rows without the field)
+    // is a sport machine. Fresh AI responses never get this default.
+    isSportMachine: true,
     machineName: scan.machineName,
     machineType: scan.machineType,
     confidence: scan.confidence,

@@ -7,4 +7,7 @@ export {
   getRecognitionConfig,
   type MobileRecognitionConfig,
 } from './recognition-config';
-export { validateRecognitionPayload } from './validate-recognition';
+export {
+  shouldBlockMachineValidation,
+  validateRecognitionPayload,
+} from './validate-recognition';

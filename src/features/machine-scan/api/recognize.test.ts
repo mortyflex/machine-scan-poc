@@ -7,6 +7,7 @@ import {
   recognizeMachine,
 } from './recognize';
 import type { RecognitionProvider } from './mock-provider';
+import { shouldBlockMachineValidation } from './validate-recognition';
 
 test('machineRecognitionSchema accepts a valid mock result', () => {
   const parsed = machineRecognitionSchema.safeParse(mockValidResult());
@@ -37,6 +38,70 @@ test('machineRecognitionSchema accepts empty possibleExercises (non-machine obje
   };
   const parsed = machineRecognitionSchema.safeParse(nonMachine);
   assert.ok(parsed.success, 'schema should allow zero exercises');
+});
+
+test('machineRecognitionSchema rejects a result missing isSportMachine', () => {
+  const legacy: Record<string, unknown> = { ...mockValidResult() };
+  delete legacy.isSportMachine;
+  const parsed = machineRecognitionSchema.safeParse(legacy);
+  assert.equal(parsed.success, false);
+});
+
+test('machineRecognitionSchema accepts isSportMachine false with empty exercises and muscles', () => {
+  const nonMachine = {
+    ...mockValidResult(),
+    machineName: "Souris d'ordinateur",
+    machineType: 'not_sport_equipment' as const,
+    isSportMachine: false,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    possibleExercises: [],
+    needsConfirmation: true,
+    uncertaintyReason: "Ce n'est pas une machine de sport.",
+  };
+  const parsed = machineRecognitionSchema.safeParse(nonMachine);
+  assert.ok(parsed.success, 'schema should accept an honest non-machine');
+});
+
+test('recognizeMachine clears exercises and muscles for a non-machine result', async () => {
+  const sloppyProvider: RecognitionProvider = {
+    async recognize() {
+      // A drifting provider says "not a machine" but still fills data.
+      return Promise.resolve({
+        ...mockValidResult(),
+        isSportMachine: false,
+        needsConfirmation: false,
+      });
+    },
+  };
+  const result = await recognizeMachine('mock://image.jpg', {
+    provider: sloppyProvider,
+  });
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.data.isSportMachine, false);
+    assert.equal(result.data.needsConfirmation, true);
+    assert.deepEqual(result.data.possibleExercises, []);
+    assert.deepEqual(result.data.primaryMuscles, []);
+    assert.deepEqual(result.data.secondaryMuscles, []);
+    assert.ok(result.data.uncertaintyReason);
+  }
+});
+
+test('shouldBlockMachineValidation blocks non-machines only', async () => {
+  const machine = await recognizeMachine('mock://image.jpg');
+  assert.equal(machine.ok, true);
+  if (machine.ok) {
+    assert.equal(machine.data.isSportMachine, true);
+    assert.equal(shouldBlockMachineValidation(machine.data), false);
+  }
+  assert.equal(
+    shouldBlockMachineValidation({
+      ...mockValidResult(),
+      isSportMachine: false,
+    }),
+    true,
+  );
 });
 
 test('recognizeMachine returns missing_image when imageUri is empty', async () => {
@@ -205,6 +270,7 @@ function mockValidResult() {
   return {
     machineName: 'Presse à cuisses inclinée',
     machineType: 'lower_body_machine' as const,
+    isSportMachine: true,
     confidence: 0.91,
     description: 'Machine guidée pour les jambes.',
     primaryMuscles: ['quadriceps', 'fessiers'],

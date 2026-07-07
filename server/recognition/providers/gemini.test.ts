@@ -41,6 +41,7 @@ function validCandidate() {
   return {
     machineName: 'Tirage vertical',
     machineType: 'cable_machine',
+    isSportMachine: true,
     confidence: 0.88,
     description: 'Machine à poulie haute pour le dos.',
     primaryMuscles: ['grand dorsal'],
@@ -112,6 +113,50 @@ test('gemini provider coerces unknown machineType and missing uncertaintyReason'
       assert.equal(result.data.machineType, 'unknown');
       assert.equal(result.data.uncertaintyReason, null);
       assert.equal(result.data.possibleExercises.length, 0);
+    }
+  });
+});
+
+test('gemini provider rejects a candidate missing isSportMachine', async () => {
+  await withGeminiKey(async () => {
+    const candidate: Record<string, unknown> = { ...validCandidate() };
+    delete candidate.isSportMachine;
+    const result = await geminiRecognition(
+      REQUEST,
+      fakeFetch(200, geminiEnvelope(candidate)),
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error.kind, 'invalid_response');
+    }
+  });
+});
+
+test('gemini provider normalizes a non-machine result by clearing exercises and muscles', async () => {
+  await withGeminiKey(async () => {
+    const candidate = {
+      ...validCandidate(),
+      machineName: "Souris d'ordinateur",
+      machineType: 'not_sport_equipment',
+      isSportMachine: false,
+      // The model wrongly kept exercises and muscles: the server must
+      // clear them and force confirmation.
+      needsConfirmation: false,
+      confidence: 0.9,
+    };
+    const result = await geminiRecognition(
+      REQUEST,
+      fakeFetch(200, geminiEnvelope(candidate)),
+    );
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.data.isSportMachine, false);
+      assert.equal(result.data.machineType, 'not_sport_equipment');
+      assert.equal(result.data.needsConfirmation, true);
+      assert.deepEqual(result.data.possibleExercises, []);
+      assert.deepEqual(result.data.primaryMuscles, []);
+      assert.deepEqual(result.data.secondaryMuscles, []);
+      assert.ok(result.data.uncertaintyReason);
     }
   });
 });

@@ -9,6 +9,7 @@ import type { RecognitionRequest, ServerRecognitionResult } from '../types';
 const mockResult: MachineRecognitionRaw = {
   machineName: 'Presse à cuisses inclinée',
   machineType: 'lower_body_machine',
+  isSportMachine: true,
   confidence: 0.91,
   description:
     "Machine guidée permettant de travailler principalement les quadriceps, les fessiers et les ischio-jambiers avec un mouvement de poussée des jambes.",

@@ -23,6 +23,7 @@ function validResult() {
   return {
     machineName: 'Tirage vertical',
     machineType: 'cable_machine',
+    isSportMachine: true,
     confidence: 0.88,
     description: 'Machine à poulie haute pour le dos.',
     primaryMuscles: ['grand dorsal'],

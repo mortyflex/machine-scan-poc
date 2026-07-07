@@ -25,6 +25,7 @@ const exercise: MachineExercise = {
 const recognition: MachineRecognitionResult = {
   machineName: 'Presse à cuisses inclinée',
   machineType: 'lower_body_machine',
+  isSportMachine: true,
   confidence: 0.91,
   description: 'Machine guidée pour les jambes.',
   primaryMuscles: ['quadriceps', 'fessiers'],
@@ -135,6 +136,9 @@ test('toMachineScanInput preserves an optional cutoutUri', () => {
 test('toRecognitionResult extracts recognition fields from a scan', () => {
   const scan = mapRowToMachineScan(validRow());
   const result = toRecognitionResult(scan);
+  // Phase 7.3 backward compat: saved records (which predate the field
+  // or passed the save guard) are always sport machines.
+  assert.equal(result.isSportMachine, true);
   assert.equal(result.machineName, scan.machineName);
   assert.equal(result.confidence, scan.confidence);
   assert.equal(result.needsConfirmation, scan.needsConfirmation);

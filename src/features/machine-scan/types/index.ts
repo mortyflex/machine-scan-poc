@@ -6,7 +6,8 @@ export type MachineType =
   | 'cable_machine'
   | 'free_weight_station'
   | 'cardio_machine'
-  | 'unknown';
+  | 'unknown'
+  | 'not_sport_equipment';
 
 export type MachineExercise = {
   name: string;
@@ -20,6 +21,13 @@ export type MachineExercise = {
 export type MachineRecognitionResult = {
   machineName: string;
   machineType: MachineType;
+  /**
+   * Phase 7.3: false when the photo shows an object that is not usable
+   * gym equipment (mouse, chair, phone…). Such results can never be
+   * validated or saved. Not persisted: saved scans are machines only,
+   * so the storage mapping restores `true` for every saved record.
+   */
+  isSportMachine: boolean;
   confidence: number;
   description: string;
   primaryMuscles: string[];

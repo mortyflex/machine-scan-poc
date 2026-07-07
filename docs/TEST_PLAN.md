@@ -643,3 +643,37 @@ Manual QA on iPhone (required), with the SYSTEM in dark mode:
   are dark and fully readable on the white card.
 - Status bar icons/clock are dark and visible on the light background.
 - Switch the system back to light mode: identical rendering.
+
+## Phase 7.3 — Not-machine recognition guard
+
+Automated:
+
+- `recognize.test.ts`: schema accepts `isSportMachine: true` valid
+  machine; accepts `isSportMachine: false` with empty
+  exercises/muscles; rejects a result missing `isSportMachine`;
+  `recognizeMachine` clears exercises/muscles and forces
+  `needsConfirmation` for a non-machine; `shouldBlockMachineValidation`
+  is true only for `isSportMachine: false`.
+- `gemini.test.ts` (server): rejects a candidate missing
+  `isSportMachine` (`invalid_response`); normalizes a non-machine
+  candidate by clearing exercises/muscles and forcing confirmation.
+- `mapping.test.ts`: `toRecognitionResult` restores
+  `isSportMachine: true` for saved records (old rows compat).
+- `remote-recognition-provider.test.ts` / server mock: fixtures carry
+  `isSportMachine: true` and still satisfy the shared schema.
+
+Manual QA on iPhone (required):
+
+- Photo of a mouse/chair/phone → screen "Ce n'est pas une machine de
+  sport" with the detected object name.
+- No Valider button anywhere in that state; only "Refaire la photo"
+  and "Annuler".
+- "Refaire la photo" reopens the camera; "Annuler" returns home.
+- A real gym machine still goes through validation → details → save.
+- Mock mode (`EXPO_PUBLIC_RECOGNITION_PROVIDER=mock`) still works
+  end-to-end.
+- Previously saved machines still open and render in saved/detail.
+- No cutout request is fired for a non-machine (no
+  `[cutout-server] POST /api/machine-cutout start` log).
+
+Manual visual validation required on physical device.

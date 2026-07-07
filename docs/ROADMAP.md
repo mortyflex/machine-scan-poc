@@ -484,3 +484,48 @@ Delivered:
 - Navigation locked to `DefaultTheme`; status bar icons forced dark on
   the always-light background.
 - `app.json` `userInterfaceStyle` set to `light`.
+
+## Phase 7.3 — Not-machine recognition guard
+
+(Requested as "Phase 7.2" in the phase brief; renumbered because
+Phase 7.2 already names the light-theme lock above.)
+
+Status: DONE (pending iPhone manual QA)
+
+QA finding:
+
+- Gemini can correctly identify non-gym objects, but the app still
+  allowed validation.
+
+Decision:
+
+- recognition contract now includes `isSportMachine`
+- non-sport objects cannot be validated or saved
+- UI shows a dedicated state with Refaire / Annuler
+- server normalizes non-machine results by clearing muscles and
+  exercises
+
+Delivered:
+
+- `isSportMachine: boolean` required in the shared Zod schema
+  (mobile + server); a Gemini response without it is rejected as
+  `invalid_response` — never defaulted for fresh AI responses.
+- New `machineType` value `not_sport_equipment` ("Objet non sportif").
+- Gemini prompt explicitly asks for non-sport detection and honest
+  object naming; the server clears exercises/muscles and forces
+  `needsConfirmation` when `isSportMachine=false`, and the mobile
+  `validateRecognitionPayload` applies the same normalization.
+- `shouldBlockMachineValidation(result)` pure helper; scan-result shows
+  a dedicated "Ce n'est pas une machine de sport" screen (Refaire la
+  photo / Annuler only — no Valider, no save, no details), skips cutout
+  generation for non-machines, and guards both `onConfirm` and the save
+  flow as safety nets.
+- Backward compat: saved records are restored with
+  `isSportMachine: true` (non-machines can never be saved), so old
+  rows keep rendering.
+
+Next phase:
+
+```txt
+Phase 8 — Product iteration after real recognition QA
+```

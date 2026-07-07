@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { recognizeMachine } from '@/features/machine-scan/api';
+import { Ionicons } from '@expo/vector-icons';
+
+import {
+  recognizeMachine,
+  shouldBlockMachineValidation,
+} from '@/features/machine-scan/api';
 import type { RecognitionErrorKind } from '@/features/machine-scan/api';
 import {
   SHOW_CUTOUT_DEBUG_PANEL,
@@ -80,6 +85,7 @@ const MACHINE_TYPE_LABELS: Record<MachineType, string> = {
   free_weight_station: 'Poste poids libres',
   cardio_machine: 'Cardio',
   unknown: 'Type inconnu',
+  not_sport_equipment: 'Objet non sportif',
 };
 
 export default function ScanResultScreen() {
@@ -124,8 +130,14 @@ export default function ScanResultScreen() {
 
   // Real cutout generation, kicked off after recognition success. Failures
   // are non-blocking: the validation stage falls back to the honest photo.
+  // Non-machines (Phase 7.3) skip the cutout entirely: the dedicated
+  // blocking screen never shows a hero cutout, so generating one would
+  // only burn provider credits.
   useEffect(() => {
     if (scanState.status !== 'success' || !imageUri) {
+      return;
+    }
+    if (shouldBlockMachineValidation(scanState.data)) {
       return;
     }
     let cancelled = false;
@@ -152,7 +164,7 @@ export default function ScanResultScreen() {
     return () => {
       cancelled = true;
     };
-  }, [scanState.status, imageUri, retryCount, cutoutAttempt]);
+  }, [scanState, imageUri, retryCount, cutoutAttempt]);
 
   const handleRetry = () => {
     setIsValidated(false);
@@ -178,6 +190,21 @@ export default function ScanResultScreen() {
     scanState.status === 'loading'
   ) {
     return <LoadingStage imageUri={imageUri} label="Analyse de la machine…" />;
+  }
+
+  // Phase 7.3 — recognized object is not sport equipment: dedicated
+  // blocking screen with only Refaire / Annuler. Placed before the
+  // validation and details stages so no Valider button, no save and no
+  // machine details can ever be reached for a non-machine, even if
+  // isValidated were somehow set.
+  if (shouldBlockMachineValidation(scanState.data)) {
+    return (
+      <NotSportMachineScreen
+        objectName={scanState.data.machineName}
+        onRetake={() => router.replace('/camera')}
+        onCancel={() => router.replace('/')}
+      />
+    );
   }
 
   const cutoutUri =
@@ -234,7 +261,14 @@ export default function ScanResultScreen() {
           machineName={scanState.data.machineName}
           machineSubtitle={MACHINE_TYPE_LABELS[scanState.data.machineType]}
           needsConfirmation={scanState.data.needsConfirmation}
-          onConfirm={() => setIsValidated(true)}
+          onConfirm={() => {
+            // Safety net (Phase 7.3): never validate a non-machine,
+            // even if this stage were reached by mistake.
+            if (shouldBlockMachineValidation(scanState.data)) {
+              return;
+            }
+            setIsValidated(true);
+          }}
           onRetake={() => router.replace('/camera')}
           onReject={() => router.replace('/')}
         />
@@ -370,6 +404,51 @@ function DetailsVisual({
 }
 
 /* -------------------------------------------------------------------------- */
+/* Not-a-sport-machine screen (Phase 7.3)                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Dedicated blocking state when recognition says the object is not
+ * sport equipment. Deliberately has no Valider, no save and no machine
+ * details — only Refaire la photo / Annuler.
+ */
+function NotSportMachineScreen({
+  objectName,
+  onRetake,
+  onCancel,
+}: {
+  objectName?: string;
+  onRetake: () => void;
+  onCancel: () => void;
+}) {
+  const showObjectName =
+    Boolean(objectName) && objectName !== 'Objet non sportif';
+  return (
+    <Screen style={[styles.center, styles.lightStage]}>
+      <Card style={styles.stateCard}>
+        <View style={styles.notMachineIconWrap}>
+          <Ionicons name="alert-circle-outline" size={30} color="#B98900" />
+        </View>
+        <AppText variant="subtitle" align="center">
+          Ce n&apos;est pas une machine de sport
+        </AppText>
+        <AppText variant="body" color="textSecondary" align="center">
+          L&apos;objet détecté ne semble pas être une machine ou un équipement
+          de sport exploitable.
+        </AppText>
+        {showObjectName ? (
+          <AppText variant="caption" color="textSecondary" align="center">
+            Objet détecté : {objectName}
+          </AppText>
+        ) : null}
+        <PrimaryButton label="Refaire la photo" onPress={onRetake} />
+        <PrimaryButton label="Annuler" variant="ghost" onPress={onCancel} />
+      </Card>
+    </Screen>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* Error screen                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -439,6 +518,13 @@ function SaveBlock({
   const [state, setState] = useState<SaveState>({ status: 'idle' });
 
   const handleSave = () => {
+    // Safety net (Phase 7.3): a non-machine scan is never persisted,
+    // even if this block were rendered by mistake.
+    if (shouldBlockMachineValidation(data)) {
+      notifyError();
+      setState({ status: 'error' });
+      return;
+    }
     setState({ status: 'saving' });
     saveMachineScan(toMachineScanInput(data, imageUri, cutoutUri))
       .then((result) => {
@@ -528,6 +614,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     alignItems: 'stretch',
     width: '100%',
+  },
+  notMachineIconWrap: {
+    alignSelf: 'center',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFF4D6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   saveArea: {
     gap: spacing.xs,
