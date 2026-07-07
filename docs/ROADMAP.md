@@ -458,3 +458,29 @@ Next phase:
 ```txt
 Phase 8 — Product iteration after real recognition QA
 ```
+
+## Phase 7.2 — Lock premium light theme (dark mode fix)
+
+Status: DONE (pending iPhone visual QA)
+
+QA finding (iPhone in system dark mode):
+
+- cards turned near-black on the light dotted pages
+- exercise card body text was light-on-white, unreadable
+- the mix looked like a broken night mode
+
+Root cause: the premium design is light-only, but three entry points
+still followed the system appearance — `useAppTheme` switched to the
+dark palette, `_layout.tsx` used react-navigation `DarkTheme`, and
+`app.json` had `userInterfaceStyle: "automatic"` — while premium
+surfaces (dotted background, sticker, exercise cards) are hardcoded
+light.
+
+Delivered:
+
+- `useAppTheme` always returns the light palette (documented decision:
+  a real dark design would be a dedicated phase, never an automatic
+  flip).
+- Navigation locked to `DefaultTheme`; status bar icons forced dark on
+  the always-light background.
+- `app.json` `userInterfaceStyle` set to `light`.

@@ -632,3 +632,14 @@ Manual QA on iPhone (required):
   start` (and still `[cutout-server] POST /api/machine-cutout start`).
 - A non-machine object no longer returns the default leg press mock.
 - Backend stopped → error UI, never silent mock.
+
+## Phase 7.2 — Lock premium light theme (dark mode fix)
+
+Manual QA on iPhone (required), with the SYSTEM in dark mode:
+
+- Home, saved machines list, scan details, saved detail: white dotted
+  pages with white floating cards — no black cards anywhere.
+- Exercise card: all body texts (setup, execution, mistakes, safety)
+  are dark and fully readable on the white card.
+- Status bar icons/clock are dark and visible on the light background.
+- Switch the system back to light mode: identical rendering.

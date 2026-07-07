@@ -7,24 +7,21 @@ import {
   PlusJakartaSans_700Bold,
   PlusJakartaSans_800ExtraBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, useColorScheme } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 
 import { initMachineScanDatabase } from "@/features/machine-scan/storage";
 import { AppText, Screen } from "@/shared/components";
 import { useAppTheme } from "@/shared/theme";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+  // The premium design is light-only: navigation stays on the light
+  // theme whatever the system appearance (see src/shared/theme).
+  const theme = DefaultTheme;
   const appTheme = useAppTheme();
   const [initState, setInitState] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -87,7 +84,8 @@ export default function RootLayout() {
         <Stack.Screen name="machine/[id]" />
       </Stack>
 
-      <StatusBar style="auto" />
+      {/* Dark icons: the app background is always light. */}
+      <StatusBar style="dark" />
     </ThemeProvider>
   );
 }
