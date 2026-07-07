@@ -144,6 +144,35 @@ test('recognizeMachine remote without base URL returns provider_error', async ()
   }
 });
 
+test('recognizeMachine routes to the remote provider when config is remote', async () => {
+  const previousProvider = process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
+  const previousUrl = process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL;
+  process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = 'remote';
+  process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL = 'http://localhost:3000';
+  try {
+    const result = await recognizeMachine('file:///photo.jpg');
+    // In plain Node the remote path cannot read the photo
+    // (expo-file-system is unavailable), so it must surface a typed
+    // error — never the mock leg-press result. If routing regressed to
+    // the mock provider, this would come back ok:true.
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.error.kind, 'missing_image');
+    }
+  } finally {
+    if (previousProvider !== undefined) {
+      process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = previousProvider;
+    } else {
+      delete process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
+    }
+    if (previousUrl !== undefined) {
+      process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL = previousUrl;
+    } else {
+      delete process.env.EXPO_PUBLIC_RECOGNITION_API_BASE_URL;
+    }
+  }
+});
+
 test('an injected provider wins over the remote env configuration', async () => {
   const previousProvider = process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER;
   process.env.EXPO_PUBLIC_RECOGNITION_PROVIDER = 'remote';

@@ -605,3 +605,30 @@ Remote mode (`EXPO_PUBLIC_RECOGNITION_PROVIDER=remote`,
   cutout failure still falls back honestly.
 - `GET /api/machine-recognition/debug` shows provider/model and
   hasGeminiApiKey=true without exposing the key.
+
+## Phase 7.1 — Fix mobile recognition provider not calling backend
+
+Automated:
+
+- `recognition-config.test.ts`: pure `resolveRecognitionConfig` matrix —
+  undefined/mock/remote/whitespace/invalid provider values, dedicated
+  URL precedence, fallback to `EXPO_PUBLIC_API_BASE_URL`; plus
+  `getRecognitionConfig` env reads.
+- `remote-recognition-provider.test.ts` (injected deps): posts to
+  `/api/machine-recognition` with `{ imageBase64, mimeType }`; typed
+  errors for unreadable file, fetch failure, non-2xx, schema-invalid
+  payload.
+- `recognize.test.ts`: routing regression — remote config must never
+  return the mock result.
+
+Manual QA on iPhone (required):
+
+- `.env` must contain BOTH `EXPO_PUBLIC_RECOGNITION_PROVIDER=remote` and
+  `EXPO_PUBLIC_RECOGNITION_API_BASE_URL=http://<IP_MAC>:3000`, then
+  restart with `npx expo start -c` and close/reopen Expo Go.
+- Metro/device logs show `[recognition-mobile] provider = remote` and
+  the request start/response status lines.
+- Backend logs show `[recognition-server] POST /api/machine-recognition
+  start` (and still `[cutout-server] POST /api/machine-cutout start`).
+- A non-machine object no longer returns the default leg press mock.
+- Backend stopped → error UI, never silent mock.

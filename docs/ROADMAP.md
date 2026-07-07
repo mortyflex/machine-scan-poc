@@ -420,3 +420,41 @@ Next phase:
 ```txt
 Phase 8 — Product iteration after real recognition QA
 ```
+
+## Phase 7.1 — Fix mobile recognition provider not calling backend
+
+Status: DONE (pending iPhone QA)
+
+QA finding: with `RECOGNITION_PROVIDER=gemini` server-side, the app still
+showed the mock leg press and `/api/machine-recognition` was never
+called.
+
+Root cause: the local `.env` only contained the SERVER recognition
+variables; `EXPO_PUBLIC_RECOGNITION_PROVIDER` /
+`EXPO_PUBLIC_RECOGNITION_API_BASE_URL` were missing, so the mobile
+config correctly fell back to its `mock` default. Not a code routing
+bug — but the choice was invisible without logs.
+
+Delivered:
+
+- `[recognition-mobile]` logs (provider, apiBaseUrl, request start,
+  response status, error kind — never base64/keys) so the provider
+  choice is visible on device.
+- Pure `resolveRecognitionConfig(env)` in `recognition-config.ts`;
+  `getRecognitionConfig()` keeps full static `process.env.EXPO_PUBLIC_*`
+  member reads (required by Expo bundle-time inlining). `remote` value
+  now tolerates surrounding whitespace.
+- `requestRemoteRecognition` accepts injectable
+  `{ readImageBase64, fetchFn }`; expo-file-system is lazy-imported so
+  the remote flow is fully testable in plain Node.
+- Tests: pure resolver matrix (undefined/mock/remote/invalid/URL
+  precedence/fallback), remote provider request/response/error paths,
+  and a routing regression test (remote config never returns the mock).
+- `.env.example`: remote mode now shows both required mobile variables
+  and the mandatory `npx expo start -c` + Expo Go restart note.
+
+Next phase:
+
+```txt
+Phase 8 — Product iteration after real recognition QA
+```

@@ -23,8 +23,19 @@ export async function recognizeMachine(
 
   // An explicitly injected provider (tests) always wins over env config.
   const config = getRecognitionConfig();
+  if (!options?.provider) {
+    // Phase 7.1 diagnostic logs: make the provider choice visible on
+    // device. Never logs image data or keys.
+    console.log(`[recognition-mobile] provider = ${config.provider}`);
+    console.log(
+      `[recognition-mobile] apiBaseUrl = ${config.apiBaseUrl || '(empty)'}`,
+    );
+  }
   if (!options?.provider && config.provider === 'remote') {
     if (!config.apiBaseUrl) {
+      console.warn(
+        '[recognition-mobile] error kind = provider_error (missing base URL)',
+      );
       return {
         ok: false,
         error: {
