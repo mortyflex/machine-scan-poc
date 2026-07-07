@@ -597,6 +597,36 @@ Delivered:
 - No cutout/recognition logic changed; remove.bg and Gemini flows
   untouched.
 
+## Phase 8.2 — Configure first iOS development build
+
+Status: DONE (pending Expo Go regression QA)
+
+Goal: configure the project for the first iOS development build —
+WITHOUT implementing Apple Vision, without Swift code, without running
+`eas build` / `expo prebuild` / `expo run:ios`, and without
+generating/committing `ios/` or `android/`.
+
+Delivered:
+
+- `app.json`: `ios.bundleIdentifier = com.mortyflex.machinescanpoc`
+  (chosen by Mohamed), other iOS fields preserved; `name`, `slug` and
+  `scheme` unchanged.
+- `eas.json` verified: `development` profile already valid for an iOS
+  device build (`developmentClient: true`, `distribution: internal`,
+  `ios.simulator: false`); `development-simulator` kept; no change
+  needed.
+- `docs/DEV_CLIENT_SETUP.md`: Phase 8.2 bundle identifier section,
+  exact first-build command, post-build install steps, pre-build
+  checklist, Expo Go vs development build note.
+- `docs/APPLE_VISION_CUTOUT.md` and
+  `docs/native/APPLE_VISION_MODULE_SPEC.md`: "iOS development build
+  requirement" sections.
+- No build launched: `eas build` will be run manually by Mohamed after
+  validation (an EAS project via `eas init` and Apple credentials will
+  be needed at that point).
+- No cutout/recognition logic changed; remove.bg and Gemini flows
+  untouched.
+
 Next phase:
 
 ```txt

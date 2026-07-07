@@ -1,7 +1,7 @@
 # Expo Dev Client setup
 
-Status: PREPARED (Phase 8.1) — no development build has been created
-yet, no native module exists yet.
+Status: CONFIGURED (Phase 8.2) — iOS bundle identifier is set, no
+development build has been created yet, no native module exists yet.
 
 ## Current state
 
@@ -48,11 +48,9 @@ npm run start:dev-client:clear
 
 ## Step 4 — Create an iOS development build
 
-Prerequisite: `app.json` has NO `ios.bundleIdentifier` yet. One must be
-chosen and added before the first iOS device build (for example
-`com.<owner>.machinescanpoc` — to be decided by Mohamed, do not let an
-agent invent it). An EAS project (`eas init`) and Apple credentials will
-also be needed at that point.
+Prerequisite (done in Phase 8.2): `app.json` now sets
+`ios.bundleIdentifier` — see below. An EAS project (`eas init`) and
+Apple credentials will still be needed at build time.
 
 Option A — EAS cloud build:
 
@@ -68,6 +66,55 @@ npx expo run:ios --device
 
 Do NOT run either command in a preparation phase; both generate native
 code (`ios/`) which must not be committed.
+
+## Phase 8.2 — iOS bundle identifier
+
+The iOS bundle identifier is:
+
+```txt
+com.mortyflex.machinescanpoc
+```
+
+It is set in `app.json` under `expo.ios.bundleIdentifier` and is
+required before creating the first iOS development build.
+
+## First iOS development build
+
+Do not run this until the project is validated.
+
+Command:
+
+```bash
+eas build --profile development --platform ios
+```
+
+After the build is complete:
+
+1. Install the development build on the iPhone from the EAS link /
+   QR code.
+2. Start Metro in dev-client mode:
+
+```bash
+npm run start:dev-client:clear
+```
+
+3. Open the installed development app, not Expo Go.
+
+## Before running EAS build
+
+- [ ] `ios.bundleIdentifier` is set.
+- [ ] `expo-dev-client` is installed.
+- [ ] `eas.json` has a `development` profile.
+- [ ] `.env` secrets are not committed.
+- [ ] Expo Go still works.
+- [ ] Working tree is clean.
+
+## Expo Go vs development build
+
+Expo Go remains usable as long as no custom native module is required.
+
+The development build will be necessary only when the
+`AppleVisionCutout` native module is added.
 
 ## Step 5 — Install the dev app on iPhone
 

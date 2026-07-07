@@ -8,6 +8,7 @@
     "scheme": "machinescanpoc",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.mortyflex.machinescanpoc",
       "icon": "./assets/expo.icon",
       "infoPlist": {
         "NSCameraUsageDescription": "L'app utilise la caméra pour photographier et identifier les machines de gym."

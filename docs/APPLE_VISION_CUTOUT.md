@@ -34,6 +34,18 @@ Until the native module exists, keep using Expo Go
 (`npm run start:clear`); see `docs/DEV_CLIENT_SETUP.md` for the full
 workflow.
 
+## iOS development build requirement
+
+The first development build will use:
+
+```txt
+ios.bundleIdentifier = com.mortyflex.machinescanpoc
+```
+
+This enables installing a custom development app on a physical iPhone.
+
+The native Apple Vision module is not implemented yet.
+
 ## Proposed pipeline
 
 1. `isSportMachine=false` → skip cutout entirely (Phase 7.3, unchanged).

@@ -27,8 +27,20 @@ A real Apple Vision provider requires a development build with
 
 Phase 8.1 only prepares the project (dependency, scripts, `eas.json`,
 `docs/DEV_CLIENT_SETUP.md`). It does not implement Swift and does not
-generate native folders. A `ios.bundleIdentifier` must be chosen in
-`app.json` before the first iOS device build.
+generate native folders. Phase 8.2 set the `ios.bundleIdentifier` in
+`app.json`, required before the first iOS device build.
+
+## iOS development build requirement
+
+The first development build will use:
+
+```txt
+ios.bundleIdentifier = com.mortyflex.machinescanpoc
+```
+
+This enables installing a custom development app on a physical iPhone.
+
+The native Apple Vision module is not implemented yet.
 
 ## JS API
 

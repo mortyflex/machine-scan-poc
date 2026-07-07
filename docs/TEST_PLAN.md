@@ -736,3 +736,25 @@ Manual QA on iPhone (Expo Go, required):
 - Do NOT test Apple Vision: no native module exists yet. The future
   native test will require installing a development build
   (`docs/DEV_CLIENT_SETUP.md`).
+
+## Phase 8.2 — Configure first iOS development build
+
+Automated:
+
+- `npx tsc --noEmit` passes with `ios.bundleIdentifier` set.
+- `npm run lint` passes.
+- Existing Node test suites unchanged and passing (recognition config,
+  remote provider, recognize, mapping, generate-cutout,
+  write-cutout-file, server cutout/recognition/gemini).
+- `git status`: no `ios/` or `android/` folder created or committed.
+
+Manual QA on iPhone (Expo Go, required):
+
+- `npm run start:clear` still launches Expo Go correctly (adding
+  `ios.bundleIdentifier` must not affect Expo Go).
+- `EXPO_PUBLIC_CUTOUT_PROVIDER=auto` still falls back to remove.bg in
+  Expo Go.
+- Gemini recognition (`EXPO_PUBLIC_RECOGNITION_PROVIDER=remote`) still
+  works.
+- Do NOT run `eas build` yet: Mohamed launches the first development
+  build manually after validating this phase.
