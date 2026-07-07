@@ -119,17 +119,31 @@ covers impossible failures as `provider_error`.
 
 `src/features/machine-scan/cutout/`:
 
-- `types.ts`: `CutoutProvider` (`disabled | remote`), `CutoutMethod`
-  (`none | remote`), `CutoutErrorKind`
-  (`invalid_input | cutout_disabled | cutout_unavailable | cutout_failed |
-  network_error | invalid_response`), and the `CutoutResult` discriminated
-  union.
+- `types.ts`: `CutoutProvider`
+  (`disabled | remote | local-vision | auto`, Phase 8), `CutoutMethod`
+  (`none | remote | local-vision`), `CutoutErrorKind`
+  (`invalid_input | cutout_disabled | cutout_unavailable |
+  local_provider_unavailable | cutout_failed | network_error |
+  invalid_response`), and the `CutoutResult` discriminated union.
+- `cutout-config.ts`: pure `resolveCutoutProvider(raw)` (whitespace
+  tolerated, unknown/missing → `disabled`) + `getCutoutConfig()`.
 - `generate-cutout.ts`: public API
-  `generateMachineCutout(imageUri): Promise<CutoutResult>`. Never throws
-  for expected states. Provider selection reads
+  `generateMachineCutout(imageUri, deps?): Promise<CutoutResult>`. Never
+  throws for expected states. Provider selection reads
   `EXPO_PUBLIC_CUTOUT_PROVIDER` (default `disabled`; unknown values are
-  treated as disabled). The remote provider is lazy-imported so tests run
-  in plain Node.
+  treated as disabled). Providers are lazy-imported so tests run in
+  plain Node, and injectable via `deps` (`localProvider` /
+  `remoteProvider`) for unit tests. Modes: `remote` = backend call
+  (unchanged), `local-vision` = local Apple Vision only (strict, never
+  touches the backend), `auto` = try local first then fall back to
+  remote on any local failure.
+- `local-vision-cutout-provider.ts` (Phase 8): future Apple Vision /
+  VisionKit subject-lift provider. Currently a safe stub that always
+  returns `local_provider_unavailable` (Expo Go cannot load custom
+  native code); the real implementation requires an Expo Development
+  Build and the `AppleVisionCutout` native module — see
+  `docs/APPLE_VISION_CUTOUT.md` and
+  `docs/native/APPLE_VISION_MODULE_SPEC.md`.
 - `remote-cutout-provider.ts`: reads the local photo as base64
   (`expo-file-system` `File.base64()`), POSTs
   `{ imageBase64, mimeType }` JSON to

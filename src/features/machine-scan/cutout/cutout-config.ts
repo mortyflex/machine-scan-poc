@@ -1,9 +1,32 @@
+import type { CutoutProvider } from './types';
+
 export type MobileCutoutConfig = {
-  provider: 'disabled' | 'remote';
+  provider: CutoutProvider;
   apiBaseUrl: string;
   rawProvider?: string;
   rawApiBaseUrl?: string;
 };
+
+const KNOWN_PROVIDERS: readonly CutoutProvider[] = [
+  'disabled',
+  'remote',
+  'local-vision',
+  'auto',
+];
+
+/**
+ * Pure provider resolution, unit-testable in plain Node. Unknown or
+ * missing values stay `disabled` (the historical safe default);
+ * surrounding whitespace is tolerated like the recognition config.
+ */
+export function resolveCutoutProvider(
+  rawProvider: string | undefined,
+): CutoutProvider {
+  const value = rawProvider?.trim();
+  return (KNOWN_PROVIDERS as readonly string[]).includes(value ?? '')
+    ? (value as CutoutProvider)
+    : 'disabled';
+}
 
 /**
  * Centralized mobile cutout configuration. Only non-secret
@@ -16,7 +39,7 @@ export function getCutoutConfig(): MobileCutoutConfig {
   const rawApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   return {
-    provider: rawProvider === 'remote' ? 'remote' : 'disabled',
+    provider: resolveCutoutProvider(rawProvider),
     apiBaseUrl: rawApiBaseUrl?.trim() ?? '',
     rawProvider,
     rawApiBaseUrl,

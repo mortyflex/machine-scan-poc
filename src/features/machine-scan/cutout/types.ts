@@ -1,11 +1,20 @@
-export type CutoutProvider = 'disabled' | 'remote';
+/**
+ * Mobile-side provider selection (Phase 8):
+ * - `disabled`: no cutout, honest fallback.
+ * - `remote`: backend `/api/machine-cutout` (remove.bg today).
+ * - `local-vision`: on-device Apple Vision subject lift ONLY — errors when
+ *   the native module is absent (always the case in Expo Go for now).
+ * - `auto`: try local Apple Vision first, fall back to remote on failure.
+ */
+export type CutoutProvider = 'disabled' | 'remote' | 'local-vision' | 'auto';
 
-export type CutoutMethod = 'none' | 'remote';
+export type CutoutMethod = 'none' | 'remote' | 'local-vision';
 
 export type CutoutErrorKind =
   | 'invalid_input'
   | 'cutout_disabled'
   | 'cutout_unavailable'
+  | 'local_provider_unavailable'
   | 'cutout_failed'
   | 'network_error'
   | 'invalid_response';

@@ -524,8 +524,48 @@ Delivered:
   `isSportMachine: true` (non-machines can never be saved), so old
   rows keep rendering.
 
+## Phase 8 — Apple Vision local cutout provider architecture
+
+Status: DONE (pending iPhone manual QA)
+
+Goal: prepare a local iOS Apple Vision / VisionKit cutout to reduce
+remove.bg API usage, without native code yet and without breaking
+Expo Go or the current remote pipeline.
+
+Architecture decision:
+
+- Apple Vision subject lift is iOS only and needs native Swift; Expo Go
+  cannot load it, so a real integration requires an Expo Development
+  Build (documented, NOT built in this phase).
+- The mobile cutout module becomes multi-provider:
+  `EXPO_PUBLIC_CUTOUT_PROVIDER=disabled | remote | local-vision | auto`
+  (default still `disabled`; `remote` behavior unchanged).
+- `local-vision` is a safe stub returning the typed error
+  `local_provider_unavailable`; `auto` tries local first and falls back
+  to remote on any local failure — in Expo Go, `auto` therefore behaves
+  like `remote`.
+- remove.bg stays the fallback and the only provider for Android.
+
+Delivered:
+
+- `local-vision-cutout-provider.ts` stub (never crashes, no native
+  import).
+- `generate-cutout.ts` orchestrator: strict `local-vision` mode,
+  `auto` local→remote fallback, injectable providers for Node tests,
+  `[cutout-mobile]` logs (never base64/keys).
+- Pure `resolveCutoutProvider` in `cutout-config.ts`
+  (whitespace-tolerant, unknown → disabled).
+- `docs/APPLE_VISION_CUTOUT.md` (constraints, pipeline, future JS module
+  contract, rollout plan) and `docs/native/APPLE_VISION_MODULE_SPEC.md`
+  (native `AppleVisionCutout` spec — spec only, no `ios/` code).
+- `.env.example` documents the four provider values and the Expo Go
+  limitation.
+- Tests: provider resolution matrix, stub unavailability, auto
+  fallback/skip-remote/crash-safety, remote and disabled unchanged.
+
 Next phase:
 
 ```txt
-Phase 8 — Product iteration after real recognition QA
+Phase 9 — Real AppleVisionCutout native module behind an Expo
+Development Build (explicit request required)
 ```

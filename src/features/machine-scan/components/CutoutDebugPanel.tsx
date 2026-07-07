@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import type { CutoutProvider } from '@/features/machine-scan/cutout';
+
 export type CutoutDebugStatus =
   | 'idle'
   | 'loading'
@@ -8,7 +10,7 @@ export type CutoutDebugStatus =
   | 'disabled';
 
 export type CutoutDebugPanelProps = {
-  provider: 'disabled' | 'remote';
+  provider: CutoutProvider;
   apiBaseUrl: string;
   status: CutoutDebugStatus;
   errorKind?: string;

@@ -676,4 +676,40 @@ Manual QA on iPhone (required):
 - No cutout request is fired for a non-machine (no
   `[cutout-server] POST /api/machine-cutout start` log).
 
+## Phase 8 — Apple Vision local cutout provider architecture
+
+Automated (`src/features/machine-scan/cutout/generate-cutout.test.ts`):
+
+- `resolveCutoutProvider` supports `disabled/remote/local-vision/auto`,
+  tolerates whitespace, defaults unknown/missing values to `disabled`.
+- `generateLocalVisionCutout` stub returns
+  `local_provider_unavailable` (never crashes).
+- `local-vision` strict mode returns `local_provider_unavailable` and
+  never calls the remote provider.
+- `auto` falls back to the remote provider when local is unavailable.
+- `auto` returns the local result and skips remote when an injected
+  local provider succeeds.
+- `auto` never throws when the local provider crashes (falls back to
+  remote).
+- `auto` surfaces the remote error when both providers fail.
+- `auto` without `EXPO_PUBLIC_API_BASE_URL` → `invalid_input`.
+- `remote` (injected) and `disabled` behaviors unchanged.
+
+Manual QA on iPhone (Expo Go, required):
+
+- `EXPO_PUBLIC_CUTOUT_PROVIDER=remote` (backend running with
+  `CUTOUT_PROVIDER=remove-bg` + key): cutout works exactly as before
+  (remove.bg called, real cutout revealed, save/saved intact).
+- `EXPO_PUBLIC_CUTOUT_PROVIDER=auto`: local-vision is unavailable in
+  Expo Go, dev logs show
+  `[cutout-mobile] local-vision unavailable, falling back to remote`,
+  and the cutout still works via remove.bg.
+- `EXPO_PUBLIC_CUTOUT_PROVIDER=local-vision`: no crash, no remove.bg
+  call (`[cutout-server]` stays silent), validation shows the honest
+  photo fallback with `Détourage indisponible`.
+- Non-machine scans still skip the cutout entirely.
+- Machine scans still reach validation → details → save.
+- Remember: after changing any `EXPO_PUBLIC_` value, restart with
+  `npx expo start -c` and close/reopen Expo Go.
+
 Manual visual validation required on physical device.
