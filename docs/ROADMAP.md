@@ -563,6 +563,40 @@ Delivered:
 - Tests: provider resolution matrix, stub unavailability, auto
   fallback/skip-remote/crash-safety, remote and disabled unchanged.
 
+## Phase 8.1 — Prepare Expo Dev Client workflow
+
+Status: DONE (pending Expo Go regression QA)
+
+Goal: prepare the Expo Dev Client environment (dependency, scripts,
+EAS config, docs, guardrails) for the future `AppleVisionCutout`
+native phase — WITHOUT implementing Apple Vision, without Swift code,
+without `expo prebuild`, without generating/committing `ios/` or
+`android/`, and without breaking Expo Go.
+
+Delivered:
+
+- `expo-dev-client@~6.0.21` installed via `npx expo install` (dependency
+  only — no build triggered, no native folder generated, Expo Go
+  unaffected).
+- npm scripts: `start:clear`, `start:dev-client`,
+  `start:dev-client:clear` (existing scripts untouched).
+- `eas.json` created with `development` (device),
+  `development-simulator`, `preview` and `production` profiles; no
+  `eas build` run, no credentials configured.
+- `docs/DEV_CLIENT_SETUP.md`: step-by-step guide (Expo Go today,
+  dev client later, EAS vs local build options, install on iPhone,
+  when to rebuild vs pure-JS hot reload).
+- `docs/APPLE_VISION_CUTOUT.md` and
+  `docs/native/APPLE_VISION_MODULE_SPEC.md`: "Dev Client requirement"
+  sections.
+- `README.md`: "Local development modes" (Expo Go vs Development
+  Client).
+- Known gap documented (NOT invented): `app.json` has no
+  `ios.bundleIdentifier`; Mohamed must choose one before the first iOS
+  device build.
+- No cutout/recognition logic changed; remove.bg and Gemini flows
+  untouched.
+
 Next phase:
 
 ```txt

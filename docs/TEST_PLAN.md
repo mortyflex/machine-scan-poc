@@ -713,3 +713,26 @@ Manual QA on iPhone (Expo Go, required):
   `npx expo start -c` and close/reopen Expo Go.
 
 Manual visual validation required on physical device.
+
+## Phase 8.1 — Prepare Expo Dev Client workflow
+
+Automated:
+
+- `npx tsc --noEmit` passes with `expo-dev-client` installed.
+- `npm run lint` passes.
+- Existing Node test suites unchanged and passing (recognition config,
+  remote provider, recognize, mapping, generate-cutout,
+  write-cutout-file, server cutout/recognition/gemini).
+- `git status`: no `ios/` or `android/` folder created or committed.
+
+Manual QA on iPhone (Expo Go, required):
+
+- `npm run start:clear` still launches Expo Go correctly (adding the
+  `expo-dev-client` dependency must not affect Expo Go).
+- `EXPO_PUBLIC_CUTOUT_PROVIDER=auto` still falls back to remove.bg in
+  Expo Go.
+- Gemini recognition (`EXPO_PUBLIC_RECOGNITION_PROVIDER=remote`) still
+  works.
+- Do NOT test Apple Vision: no native module exists yet. The future
+  native test will require installing a development build
+  (`docs/DEV_CLIENT_SETUP.md`).

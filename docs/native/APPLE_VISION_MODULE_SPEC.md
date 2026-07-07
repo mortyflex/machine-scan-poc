@@ -20,6 +20,16 @@ Expo:
 - the JS side must guard-import the module and degrade to
   `local_provider_unavailable` when it is absent
 
+## Dev Client requirement
+
+A real Apple Vision provider requires a development build with
+`expo-dev-client`.
+
+Phase 8.1 only prepares the project (dependency, scripts, `eas.json`,
+`docs/DEV_CLIENT_SETUP.md`). It does not implement Swift and does not
+generate native folders. A `ios.bundleIdentifier` must be chosen in
+`app.json` before the first iOS device build.
+
 ## JS API
 
 ```ts

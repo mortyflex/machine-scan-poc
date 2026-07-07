@@ -25,6 +25,20 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Local development modes
+
+Expo Go:
+
+- use `npm run start:clear`
+- works for current JS/backend flows (Gemini recognition, remove.bg
+  cutout, `EXPO_PUBLIC_CUTOUT_PROVIDER=auto` fallback)
+
+Development Client:
+
+- use `npm run start:dev-client:clear`
+- required for the future Apple Vision native module only
+- no development build exists yet; see `docs/DEV_CLIENT_SETUP.md`
+
 ## Get a fresh project
 
 When you're ready, run:

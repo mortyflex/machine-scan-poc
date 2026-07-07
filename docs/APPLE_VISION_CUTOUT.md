@@ -20,6 +20,20 @@ Reference: https://developer.apple.com/documentation/visionkit
 - Android keeps using the remote remove.bg provider (no local provider
   planned for Android in this phase).
 
+## Dev Client requirement
+
+A real Apple Vision provider requires a development build with
+`expo-dev-client`.
+
+Phase 8.1 only prepares the project: `expo-dev-client` dependency,
+`start:dev-client*` npm scripts, `eas.json` development profiles and
+`docs/DEV_CLIENT_SETUP.md`. It does not implement Swift and does not
+generate native folders (`ios/` / `android/` stay uncommitted).
+
+Until the native module exists, keep using Expo Go
+(`npm run start:clear`); see `docs/DEV_CLIENT_SETUP.md` for the full
+workflow.
+
 ## Proposed pipeline
 
 1. `isSportMachine=false` → skip cutout entirely (Phase 7.3, unchanged).

@@ -11,6 +11,7 @@
     "expo": "~54.0.0",
     "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.13",
+    "expo-dev-client": "~6.0.21",
     "expo-device": "~8.0.10",
     "expo-file-system": "~19.0.23",
     "expo-font": "~14.0.12",
@@ -48,6 +49,9 @@
   },
   "scripts": {
     "start": "expo start",
+    "start:clear": "expo start -c",
+    "start:dev-client": "expo start --dev-client",
+    "start:dev-client:clear": "expo start --dev-client -c",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
