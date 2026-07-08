@@ -50,6 +50,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f3bec60a-7ca4-4941-b41e-e9baf4f95637"
+      }
+    },
+    "owner": "mortyflex"
   }
 }
